@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union, Optional
+from typing import List, Tuple, Union, Optional, Dict
 from enum import Enum
 import pygame as p
 
@@ -107,3 +107,21 @@ class Sprites(Enum):
     wall_open_left = ...
     wall_open_right = ...
     wall_top = ...
+
+
+class MultipleStateAnimatedSprite(p.sprite.Sprite):
+    def __init__(self, states: Dict[str, AnimatedSprite], current_state: str):
+        super().__init__()
+        self.states = states
+        self.state = self.states[current_state]
+
+    @property
+    def image(self):
+        return self.state.image
+
+    @property
+    def rect(self):
+        return self.state.rect
+
+    def set_state(self, state: str):
+        self.state = self.states[state]

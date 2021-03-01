@@ -1,11 +1,14 @@
-from typing import Tuple, AnyStr as Path
+from typing import Tuple, AnyStr
 import pygame
 
 
 class BaseApp:
-    def __init__(self, title="load again", icon_path: Path = "../graphic/icon.png", height: int = 300, width: int = 300,
-                 bg_color: Tuple[int, int, int] = (0, 0, 0)):
-        self.screen = pygame.display.set_mode((height, width))
+    def __init__(self, title="load again", icon_path: AnyStr = "../graphic/icon.png", height: int = 300,
+                 width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
+        self.screen: pygame.Surface = pygame.display.set_mode((height, width)) \
+            if create_new_screen else pygame.display.get_surface()
+        if not self.screen:
+            self.screen = pygame.display.set_mode((height, width))
         self.clock = pygame.time.Clock()
         self.delta = 0
         self.max_tps = 20
@@ -42,6 +45,9 @@ class BaseApp:
         # checking events
         self.check_events()
 
+        # game loop
+        self.game_loop()
+
         # drawing
         self.draw_background()
         self.draw()
@@ -55,6 +61,13 @@ class BaseApp:
             if keys_pressed[i]:
                 self.on_key_pressed(i)
         return
+
+    def game_loop(self):
+        """
+        To override
+        :return:
+        """
+        pass
 
     def on_key_pressed(self, key_code: int):
         pass

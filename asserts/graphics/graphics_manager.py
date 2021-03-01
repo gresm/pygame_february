@@ -9,6 +9,16 @@ SPRITES = (
     "wall_floating_right", "wall_left_n_right", "wall_open_left", "wall_open_right", "wall_top"
 )
 
+SPIKES = (
+    "spikes_floor", "spikes_left", "spikes_right", "spikes_ceiling", "spikes_floating"
+)
+
+WALLS = (
+    "wall_bottom", "wall_bottom_left", "wall_bottom_right", "wall_center", "wall_flat_top",
+    "wall_flat_top_left_corner", "wall_flat_top_right_corner", "wall_floating", "wall_floating_both",
+    "wall_floating_left", "wall_floating_right", "wall_left_n_right", "wall_open_left", "wall_open_right", "wall_top"
+)
+
 SPRITE_HIT_BOXES: Dict[str, Tuple[int, int, int, int]] = {
     "spikes_floor": (0, 16, 32, 16),
     "spikes_left": (0, 0, 16, 32),

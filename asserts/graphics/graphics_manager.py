@@ -123,6 +123,10 @@ def get_sprite(name: str, ticks: int, x: int = 0, y: int = 0, hit_box: Optional[
     return s
 
 
+def get_player_sprite(ticks: int, x: int, y: int):
+    pass
+
+
 class Sprites(Enum):
     def __getattribute__(self, item: str) -> "AnimatedSprite":
         if len(item) >= 1 and item[0] == "_":

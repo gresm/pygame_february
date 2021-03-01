@@ -21,8 +21,10 @@ class AnimatedSprite(p.sprite.Sprite):
     def __init__(self, frames: Union[List[p.Surface], Tuple[p.Surface]], max_ticks: int, x: int = 0, y: int = 0,
                  hit_box: Optional[p.Rect] = None, *groups: p.sprite.AbstractGroup):
         super().__init__(*groups)
-        self.y = y
-        self.x = x
+        self._real_x = x
+        self._real_y = y
+        self.offset_x = 0
+        self.offset_y = 0
         self.frames = [s.convert_alpha() for s in frames]
         self.frame = 0
         self.update_image()
@@ -32,11 +34,35 @@ class AnimatedSprite(p.sprite.Sprite):
         self.tick_count = 0
 
     @property
+    def x(self):
+        return self._real_x + self.offset_x
+
+    @x.setter
+    def x(self, value: int):
+        self._real_x = value
+
+    @property
+    def y(self):
+        return self._real_y + self.offset_x
+
+    @y.setter
+    def y(self, value: int):
+        self._real_x = value
+
+    @property
     def hit_box(self) -> p.Rect:
         h = self.hit_box_default.copy()
         h.x += self.x
         h.y += self.x
         return h
+
+    def set_offset(self, x: int, y: int):
+        self.offset_x = x
+        self.offset_y = y
+
+    def move_offset(self, x: int, y: int):
+        self.offset_x += x
+        self.offset_y += y
 
     def collide_with(self, other:  Union["AnimatedSprite", "MultipleStateAnimatedSprite"]):
         return self.rect.colliderect(other.hit_box)
@@ -180,3 +206,9 @@ class MultipleStateAnimatedSprite(p.sprite.Sprite):
 
     def collide_with(self, other:  Union["AnimatedSprite", "MultipleStateAnimatedSprite"]):
         return self.rect.colliderect(other.hit_box)
+
+    def set_offset(self, x: int, y: int):
+        self.state.set_offset(x, y)
+
+    def move_offset(self, x: int, y: int):
+        self.state.move_offset(x, y)

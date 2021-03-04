@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from asserts.sourse.csv_reader import CsvOpen
 
@@ -9,7 +9,7 @@ LEVELS = (
 )
 
 
-def load_csv(file_path) -> Optional[List[List[int]]]:
+def load_csv(file_path) -> List[List[int]]:
     with CsvOpen(file_path, "r") as file:
         data = list(map(lambda e: list(map(int, e)), file))
     return data

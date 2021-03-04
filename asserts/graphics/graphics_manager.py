@@ -1,5 +1,6 @@
-from typing import List, Tuple, Union, Optional, Dict
 from enum import Enum
+from typing import List, Tuple, Union, Optional, Dict
+
 import pygame as p
 
 SPRITES = (
@@ -25,7 +26,6 @@ SPRITE_HIT_BOXES: Dict[str, Tuple[int, int, int, int]] = {
     "spikes_right": (16, 0, 16, 32),
     "spikes_ceiling": (0, 0, 32, 16)
 }
-
 
 WIN = "win"
 
@@ -77,7 +77,7 @@ class AnimatedSprite(p.sprite.Sprite):
         self.offset_x += x
         self.offset_y += y
 
-    def collide_with(self, other:  Union["AnimatedSprite", "MultipleStateAnimatedSprite"]):
+    def collide_with(self, other: Union["AnimatedSprite", "MultipleStateAnimatedSprite"]):
         return self.rect.colliderect(other.hit_box)
 
     def update_image(self):
@@ -222,7 +222,7 @@ class MultipleStateAnimatedSprite(p.sprite.Sprite):
     def update(self, *args, **kwargs) -> None:
         self.state.update()
 
-    def collide_with(self, other:  Union["AnimatedSprite", "MultipleStateAnimatedSprite"]):
+    def collide_with(self, other: Union["AnimatedSprite", "MultipleStateAnimatedSprite"]):
         return self.rect.colliderect(other.hit_box)
 
     def set_offset(self, x: int, y: int):

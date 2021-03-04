@@ -1,7 +1,6 @@
 from typing import Union, List, Tuple
 
-
-_OPERATOR_TYPE = Union[List[Union[int, float], Union[int, float]], 
+_OPERATOR_TYPE = Union[List[Union[int, float], Union[int, float]],
                        Tuple[Union[int, float], Union[int, float]], "Vector2", int, float]
 
 
@@ -18,7 +17,7 @@ class Vector2:
         raise AttributeError
 
     def size(self) -> float:
-        return sum((self.x**2, self.y**2))**0.5
+        return sum((self.x ** 2, self.y ** 2)) ** 0.5
 
     def __mul__(self, other: _OPERATOR_TYPE):
         o = self.deserialize(other)
@@ -42,13 +41,13 @@ class Vector2:
 
     def __repr__(self):
         return f"Vector2({self.x}, {self.y})"
-    
+
     def serialize(self):
         return self.x, self.y
 
     def floor(self) -> "Vector2":
         return Vector2(int(self.x), int(self.y))
-    
+
     @classmethod
     def deserialize(cls, value: _OPERATOR_TYPE) -> "Vector2":
         if isinstance(value, (list, tuple)):

@@ -1,6 +1,5 @@
-from typing import Union
 from enum import Enum
-
+from typing import Union
 
 import pygame as p
 
@@ -48,11 +47,11 @@ class SoundPlayer:
     def _get_fixed_sound_layer(layer: int) -> int:
         max_layers = p.mixer.get_num_channels()
         if layer < 0:
-            new_l = max_layers+2
+            new_l = max_layers + 2
             p.mixer.set_num_channels(new_l)
-            return new_l-1
+            return new_l - 1
         if layer > max_layers:
-            p.mixer.set_num_channels(layer+1)
+            p.mixer.set_num_channels(layer + 1)
             max_layers = p.mixer.get_num_channels()
             return max_layers
         return layer

@@ -2,11 +2,11 @@ from typing import Union, Sequence, List, AnyStr, Tuple, Optional
 
 import pygame as p
 
-import settings
-import base_app
-from vector2 import Vector2
 import asserts.graphics.graphics_manager as graphics
 import asserts.maps.maps_manager as maps
+import base_app
+import settings
+from vector2 import Vector2
 
 
 class Player(p.sprite.Sprite):

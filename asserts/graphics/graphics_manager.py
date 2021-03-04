@@ -32,7 +32,7 @@ WIN = "win"
 
 class AnimatedSprite(p.sprite.Sprite):
     def __init__(self, frames: Union[List[p.Surface], Tuple[p.Surface]], max_ticks: int, x: int = 0, y: int = 0,
-                 hit_box: Optional[p.Rect] = None, *groups: p.sprite.AbstractGroup):
+                 hit_box: Optional[p.Rect] = None, steps: int = 1, *groups: p.sprite.AbstractGroup):
         super().__init__(*groups)
         self._real_x = x
         self._real_y = y
@@ -40,6 +40,7 @@ class AnimatedSprite(p.sprite.Sprite):
         self.offset_y = 0
         self.frames = [s.convert_alpha() for s in frames]
         self.frame = 0
+        self.steps = steps
         self.update_image()
         self.rect = self.image.get_rect()
         self.hit_box_default = hit_box if hit_box else self.image.get_rect().copy()
@@ -99,13 +100,15 @@ class AnimatedSprite(p.sprite.Sprite):
         self.x += x
         self.y += y
 
-    def tick(self):
+    def tick(self) -> bool:
         self.tick_count += 1
         if self.tick_count % self.max_ticks == 0:
             self.next_frame()
+            return True
+        return False
 
     def next_frame(self):
-        self.frame += 1
+        self.frame += self.steps
         if self.frame >= len(self.frames):
             self.frame = 0
         self.update_image()
@@ -113,6 +116,10 @@ class AnimatedSprite(p.sprite.Sprite):
 
     def update(self, *args, **kwargs) -> None:
         self.tick()
+
+    # noinspection PyMethodMayBeStatic
+    def next_state(self) -> bool:
+        return False
 
 
 def get_sprite(name: str, ticks: int, x: int = 0, y: int = 0, hit_box: Optional[Tuple[int, int, int, int]] = None) \
@@ -172,11 +179,32 @@ class Sprites(Enum):
     win = ...
 
 
+class ChainedAnimatedSprite(AnimatedSprite):
+    def __init__(self, frames: Union[List[p.Surface], Tuple[p.Surface]], max_ticks: int,
+                 max_animation_loops: int = 1, x: int = 0, y: int = 0, hit_box: Optional[p.Rect] = None, steps: int = 1,
+                 *groups: p.sprite.AbstractGroup):
+        super().__init__(frames, max_ticks, x, y, hit_box, steps, *groups)
+        self.max_animation_loops = max_animation_loops
+
+    def next_state(self) -> bool:
+        if self.max_animation_loops < 0:
+            return False
+        return self.tick_count / self.max_ticks >= self.max_animation_loops
+
+
 class MultipleStateAnimatedSprite(p.sprite.Sprite):
-    def __init__(self, states: Dict[str, AnimatedSprite], current_state: str):
+    def __init__(self, states: Dict[str, Tuple[AnimatedSprite, str]], current_state: str):
         super().__init__()
         self.states = states
-        self.state = self.states[current_state]
+        self._state = self.states[current_state]
+
+    @property
+    def state(self):
+        return self._state[0]
+
+    @property
+    def next_state_name(self):
+        return self._state[1]
 
     @property
     def image(self):
@@ -211,7 +239,7 @@ class MultipleStateAnimatedSprite(p.sprite.Sprite):
         return self.state.hit_box_default
 
     def set_state(self, state: str):
-        self.state = self.states[state]
+        self._state = self.states[state]
 
     def move(self, x: int, y: int):
         self.state.move(x, y)
@@ -220,7 +248,12 @@ class MultipleStateAnimatedSprite(p.sprite.Sprite):
         self.state.goto(x, y)
 
     def update(self, *args, **kwargs) -> None:
-        self.state.update()
+        self.tick()
+
+    def tick(self) -> bool:
+        if self.state.next_state():
+            self.set_state(self.next_state_name)
+        return self.state.tick()
 
     def collide_with(self, other: Union["AnimatedSprite", "MultipleStateAnimatedSprite"]):
         return self.rect.colliderect(other.hit_box)

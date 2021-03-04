@@ -6,7 +6,7 @@ SPRITES = (
     "spikes_floor", "spikes_left", "spikes_right", "spikes_ceiling", "spikes_floating", "wall_bottom",
     "wall_bottom_left", "wall_bottom_right", "wall_center", "wall_flat_top", "wall_flat_top_left_corner",
     "wall_flat_top_right_corner", "wall_floating", "wall_floating_both", "wall_floating_left",
-    "wall_floating_right", "wall_left_n_right", "wall_open_left", "wall_open_right", "wall_top"
+    "wall_floating_right", "wall_left_n_right", "wall_open_left", "wall_open_right", "wall_top", "win"
 )
 
 SPIKES = (
@@ -25,6 +25,9 @@ SPRITE_HIT_BOXES: Dict[str, Tuple[int, int, int, int]] = {
     "spikes_right": (16, 0, 16, 32),
     "spikes_ceiling": (0, 0, 32, 16)
 }
+
+
+WIN = "win"
 
 
 class AnimatedSprite(p.sprite.Sprite):
@@ -123,7 +126,7 @@ def get_sprite(name: str, ticks: int, x: int = 0, y: int = 0, hit_box: Optional[
     return s
 
 
-def get_player_sprite(ticks: int, x: int, y: int):
+def get_player_sprite(ticks: int, x: int, y: int) -> "MultipleStateAnimatedSprite":
     pass
 
 
@@ -166,6 +169,7 @@ class Sprites(Enum):
     wall_open_left = ...
     wall_open_right = ...
     wall_top = ...
+    win = ...
 
 
 class MultipleStateAnimatedSprite(p.sprite.Sprite):

@@ -55,12 +55,12 @@ class Player(p.sprite.Sprite):
         center = self.collide_with_walls()
         self.hit_box.x -= settings.PLAYER_MOVE_CHECK_RANGE
         left = self.collide_with_walls()
-        self.hit_box.x += settings.PLAYER_MOVE_CHECK_RANGE*2
+        self.hit_box.x += settings.PLAYER_MOVE_CHECK_RANGE * 2
         right = self.collide_with_walls()
         self.hit_box.x -= settings.PLAYER_MOVE_CHECK_RANGE
         self.hit_box.y += settings.PLAYER_MOVE_CHECK_RANGE
         top = self.collide_with_walls()
-        self.hit_box.y -= settings.PLAYER_MOVE_CHECK_RANGE*2
+        self.hit_box.y -= settings.PLAYER_MOVE_CHECK_RANGE * 2
         down = self.collide_with_walls()
         self.hit_box.y += settings.PLAYER_MOVE_CHECK_RANGE
 
@@ -116,8 +116,12 @@ class Level:
         if not le:
             raise EndGame
         self.spawn = le[0]
-        self.map = le[1]
+        self.win_cords = le[1]
+        self.map = le[2]
         self.map_sprites_group = GlobalizedSprites()
+        self.win_sprite = graphics.get_sprite("win", settings.MAX_ANIMATION_TICKS, self.win_cords[0] * 32,
+                                              self.win_cords[1] * 32)
+        self.win_group = p.sprite.Group()
         self.walls = p.sprite.Group()
         self.spikes = p.sprite.Group()
         for x in range(len(self.map)):
@@ -132,6 +136,8 @@ class Level:
             self.spikes.add(tile)
         if tile_name in graphics.WALLS:
             self.walls.add(tile)
+        if tile_name == graphics.WIN:
+            self.win_group.add(tile)
 
     def get_walls_hit_box(self):
         ret = []
@@ -147,13 +153,26 @@ class Level:
             ret.append(e.hit_box)
         return ret
 
+    def get_wins_hit_box(self):
+        ret = []
+        e: Union[graphics.MultipleStateAnimatedSprite, graphics.AnimatedSprite]
+        for e in self.spikes.sprites():
+            ret.append(e.hit_box)
+        return ret
+
 
 class App(base_app.BaseApp):
     def __init__(self, title="load again", icon_path: AnyStr = "../graphic/icon.png", height: int = 300,
                  width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
         super().__init__(title, icon_path, height, width, bg_color, create_new_screen)
         self.level = Level(1)
-        self.player = Player(self.level.spawn[0], self.level.spawn[1], self.level)
+        self.player = Player(self.level.spawn[0], self.level.spawn[1],
+                             graphics.get_player_sprite(settings.PLAYER_ANIMATION_TICKS, *self.spawn), self.level,
+                             p.Rect(*self.spawn, *settings.PLAYER_SIZE))
+
+    @property
+    def spawn(self):
+        return self.level.spawn[0], self.level.spawn[1]
 
     def on_key_pressed(self, key_code: int):
         if key_code == p.K_ESCAPE:

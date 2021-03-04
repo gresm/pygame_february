@@ -21,6 +21,8 @@ def load_level(level: int):
         return
     csv = load_csv(str_l)
     # noinspection PyTypeChecker
-    spawn: Tuple[int, int] = tuple(csv[0])
+    info: Tuple[int, int, int, int] = tuple(csv[0])
+    spawn = info[0], info[1]
+    win = info[2], info[2]
     rest = csv[1:]
-    return spawn, rest
+    return spawn, win, rest

@@ -4,5 +4,5 @@ rem )
 rem ELSE (
 rem     python load_again.py
 rem )
-python load_again.py
-EXIT
+@python load_again.py
+@EXIT

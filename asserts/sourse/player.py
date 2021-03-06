@@ -4,9 +4,9 @@ import pygame as p
 
 import asserts.graphics.graphics_manager as graphics
 import asserts.maps.maps_manager as maps
-import base_app
-import settings
-from vector2 import Vector2
+import asserts.sourse.base_app as base_app
+import asserts.sourse.settings as settings
+from asserts.sourse.vector2 import Vector2
 
 
 class Player(p.sprite.Sprite):
@@ -14,15 +14,13 @@ class Player(p.sprite.Sprite):
                  hit_box: Optional[p.Rect] = None):
         super().__init__()
         self.sprite = player_sprite
-        self.spawn_x = x
-        self.spawn_y = y
-        self.x = x
-        self.y = y
+        self.spawn = Vector2(x, y)
+        self.__pos = Vector2(x, y)
+        self.time = 0
         self.hit_box = hit_box.copy() if hit_box else player_sprite.image.get_rect()
         self.level = level
-        self.cache: List[Tuple[int, int]] = [(self.x, self.y)]
-        self.x_vel = 0
-        self.y_vel = 0
+        self.cache: List[Tuple[int, int]] = [(self.pos.x, self.pos.y)]
+        self.vel = Vector2(0, 0)
         self.on_ground = False
         self.touch_wall = False
         self.gravity = settings.GRAVITY
@@ -33,7 +31,7 @@ class Player(p.sprite.Sprite):
 
     @property
     def pos(self):
-        return Vector2(self.x, self.y)
+        return self.__pos
 
     @property
     def image(self):
@@ -45,11 +43,9 @@ class Player(p.sprite.Sprite):
 
     def apply_friction(self):
         if self.touch_wall:
-            self.x_vel *= self.ground_friction
-            self.y_vel *= self.ground_friction
+            self.__pos *= self.ground_friction
         else:
-            self.x_vel *= self.global_friction
-            self.y_vel *= self.global_friction
+            self.vel *= self.global_friction
 
     def get_debug(self) -> Tuple[bool, bool, bool, bool, bool]:
         center = self.collide_with_walls()
@@ -75,14 +71,45 @@ class Player(p.sprite.Sprite):
         return bool(self.hit_box.collidelistall(self.level.get_walls_hit_box()))
 
     def apply_velocity(self):
-        self.x += self.x_vel
-        self.y += self.y_vel
+        self.__pos += self.vel
 
     def save_to_cache(self):
-        self.cache.append((self.x, self.y))
+        self.cache.append((self.pos.x, self.pos.y))
 
+    def load_from_cache(self):
+        self.__pos = self.cache[self.time]
+
+    @property
     def is_dead(self) -> bool:
         return bool(self.hit_box.collidelist(self.level.get_spikes_hit_box()))
+
+    def dead(self):
+        return KilledPlayer(self)
+
+    def check_dead(self):
+        if self.is_dead:
+            return self.dead()
+        else:
+            return self
+
+    def loop(self):
+        self.time += 1
+        self.save_to_cache()
+
+
+class KilledPlayer(Player):
+
+    def __init__(self, player: Player):
+        super(KilledPlayer, self).__init__(player.spawn.x, player.spawn.y, player.sprite, player.level, player.hit_box)
+        self.cache = player.cache
+
+    @property
+    def is_dead(self) -> bool:
+        return True
+
+    def loop(self):
+        self.time += 1
+        self.load_from_cache()
 
 
 class GlobalizedSprites(p.sprite.Group):
@@ -107,14 +134,21 @@ class GlobalizedSprites(p.sprite.Group):
 
 
 class EndGame(Exception):
-    pass
+    def __init__(self, win=False):
+        self.win = win
+        msgs = ["Game Over"]
+        if win:
+            msgs.append("You win!")
+        else:
+            msgs.append("You lose")
+        super(EndGame, self).__init__("\n".join(msgs))
 
 
 class Level:
     def __init__(self, level: int):
         le = maps.load_level(level)
         if not le:
-            raise EndGame
+            raise EndGame(True)
         self.spawn = le[0]
         self.win_cords = le[1]
         self.map = le[2]
@@ -162,7 +196,7 @@ class Level:
 
 
 class App(base_app.BaseApp):
-    def __init__(self, title="load again", icon_path: AnyStr = "../graphic/icon.png", height: int = 300,
+    def __init__(self, title="load again", icon_path: AnyStr = "../graphics/icon.png", height: int = 300,
                  width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
         super().__init__(title, icon_path, height, width, bg_color, create_new_screen)
         self.level = Level(1)
@@ -185,4 +219,4 @@ class App(base_app.BaseApp):
         pass
 
     def game_loop(self):
-        pass
+        self.player.loop()

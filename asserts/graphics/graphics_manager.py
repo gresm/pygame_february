@@ -147,6 +147,7 @@ class Sprites(Enum):
     def _get_sprite(item: str, max_ticks: int, x: int, y: int, hit_box: Optional[Tuple[int, int, int, int]] = None) \
             -> "AnimatedSprite":
         if item in SPRITES:
+            item = "asserts/graphics/" + item
             f = item + ".png"
             s = item + "_2.png"
             fd = item + "_3.png"

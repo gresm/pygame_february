@@ -1,10 +1,10 @@
-from typing import Tuple, AnyStr
+from typing import Tuple, AnyStr as Path
 
 import pygame
 
 
 class BaseApp:
-    def __init__(self, title="load again", icon_path: AnyStr = "../graphic/icon.png", height: int = 300,
+    def __init__(self, title="load again", icon_path: Path = "../graphics/icon.png", height: int = 300,
                  width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
         self.screen: pygame.Surface = pygame.display.set_mode((height, width)) \
             if create_new_screen else pygame.display.get_surface()
@@ -15,7 +15,7 @@ class BaseApp:
         self.max_tps = 20
         self.running = True
         self.bg_color = bg_color
-        pygame.display.set_icon(pygame.image.load(icon_path))
+        # pygame.display.set_icon(pygame.image.load(icon_path))
         pygame.display.set_caption(title)
         self.draw_background()
 

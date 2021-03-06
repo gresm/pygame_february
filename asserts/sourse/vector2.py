@@ -1,6 +1,6 @@
 from typing import Union, List, Tuple
 
-_OPERATOR_TYPE = Union[List[Union[int, float], Union[int, float]],
+_OPERATOR_TYPE = Union[List[Union[int, float]],
                        Tuple[Union[int, float], Union[int, float]], "Vector2", int, float]
 
 

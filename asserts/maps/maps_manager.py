@@ -3,9 +3,9 @@ from typing import List, Tuple
 from asserts.sourse.csv_reader import CsvOpen
 
 LEVELS = (
-    "level1.csv",
-    "level2.csv",
-    "level3.csv"
+    "asserts/maps/level1.csv",
+    "asserts/maps/level2.csv",
+    "asserts/maps/level3.csv"
 )
 
 
@@ -16,7 +16,7 @@ def load_csv(file_path) -> List[List[int]]:
 
 
 def load_level(level: int):
-    str_l = f"level{level}.csv"
+    str_l = f"asserts/maps/level{level}.csv"
     if str_l not in LEVELS:
         return
     csv = load_csv(str_l)

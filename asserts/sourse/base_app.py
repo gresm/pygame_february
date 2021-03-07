@@ -1,5 +1,5 @@
 from typing import Tuple, AnyStr as Path
-
+from asserts.graphics.graphics_manager import load_image
 import pygame
 
 
@@ -15,7 +15,7 @@ class BaseApp:
         self.max_tps = 20
         self.running = True
         self.bg_color = bg_color
-        # pygame.display.set_icon(pygame.image.load(icon_path))
+        pygame.display.set_icon(load_image(icon_path))
         pygame.display.set_caption(title)
         self.draw_background()
 

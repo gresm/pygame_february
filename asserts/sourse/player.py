@@ -76,21 +76,12 @@ class Player(p.sprite.Sprite):
     def save_to_cache(self):
         self.cache.append((self.pos.x, self.pos.y))
 
-    def load_from_cache(self):
-        self.__pos = self.cache[self.time]
-
     @property
     def is_dead(self) -> bool:
         return bool(self.hit_box.collidelist(self.level.get_spikes_hit_box()))
 
     def dead(self):
         return KilledPlayer(self)
-
-    def check_dead(self):
-        if self.is_dead:
-            return self.dead()
-        else:
-            return self
 
     def loop(self):
         self.time += 1
@@ -100,12 +91,27 @@ class Player(p.sprite.Sprite):
 class KilledPlayer(Player):
 
     def __init__(self, player: Player):
-        super(KilledPlayer, self).__init__(player.spawn.x, player.spawn.y, player.sprite, player.level, player.hit_box)
+        self.time = 0
         self.cache = player.cache
+        self.__spawn = player.spawn
+        self.__pos = self.__spawn
+        self.__end_pos = player.pos
+        self.__go = True
 
     @property
-    def is_dead(self) -> bool:
-        return True
+    def spawn(self):
+        return self.__spawn
+
+    @property
+    def pos(self):
+        return self.__pos
+
+    def load_from_cache(self):
+        if self.__go:
+            if self.pos == self.__end_pos:
+                self.__go = False
+            else:
+                self.__pos = self.cache[self.time]
 
     def loop(self):
         self.time += 1
@@ -163,6 +169,7 @@ class Level:
                 self.add_tile(graphics.get_sprite(graphics.SPRITES[self.map[x][y]],
                                                   settings.MAX_ANIMATION_TICKS, x * 32, y * 32),
                               graphics.SPRITES[self.map[x][y]])
+        self.memories = []
 
     def add_tile(self, tile: graphics.AnimatedSprite, tile_name):
         self.map_sprites_group.add(tile)
@@ -194,6 +201,10 @@ class Level:
             ret.append(e.hit_box)
         return ret
 
+    def loop(self):
+        for dead_player in self.memories:
+            dead_player.loop()
+
 
 class App(base_app.BaseApp):
     def __init__(self, title="load again", icon_path: AnyStr = "../graphics/icon.png", height: int = 300,
@@ -211,6 +222,12 @@ class App(base_app.BaseApp):
     def on_key_pressed(self, key_code: int):
         if key_code == p.K_ESCAPE:
             self.on_exit()
+        if (key_code == p.K_SPACE) or (key_code == p.K_W) or (key_code == p.K_UP):
+            self.player.jump()
+        if (key_code == p.K_A) or (key_code == p.K_LEFT):
+            pass
+        if (key_code == p.K_D) or (key_code == p.K_RIGHT):
+            pass
 
     def on_key_down(self, key_code: int):
         pass
@@ -220,3 +237,4 @@ class App(base_app.BaseApp):
 
     def game_loop(self):
         self.player.loop()
+        self.level.loop()

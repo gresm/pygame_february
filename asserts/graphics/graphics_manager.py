@@ -122,7 +122,7 @@ class AnimatedSprite(p.sprite.Sprite):
         return False
 
 
-def load_texture(name: str):
+def load_image(name: str):
     return p.image.load(os.path.abspath("") + "/asserts/graphics/" + name)
 
 
@@ -132,7 +132,7 @@ def get_sprite(name: str, ticks: int, x: int = 0, y: int = 0, hit_box: Optional[
     s = name + "_2.png"
     fd = name + "_3.png"
     ft = name + "_4.png"
-    return AnimatedSprite([load_texture(f), load_texture(s), load_texture(fd), load_texture(ft)], ticks, x,
+    return AnimatedSprite([load_image(f), load_image(s), load_image(fd), load_image(ft)], ticks, x,
                           y, hit_box, steps)
 
 
@@ -143,7 +143,7 @@ def get_chained_sprite(name: str, ticks: int, animation_loops, x: int = 0, y: in
     s = name + "_2.png"
     fd = name + "_3.png"
     ft = name + "_4.png"
-    return ChainedAnimatedSprite([load_texture(f), load_texture(s), load_texture(fd), load_texture(ft)], ticks,
+    return ChainedAnimatedSprite([load_image(f), load_image(s), load_image(fd), load_image(ft)], ticks,
                                  animation_loops, x, y, hit_box, steps)
 
 
@@ -172,7 +172,7 @@ class Sprites(Enum):
             s = item + "_2.png"
             fd = item + "_3.png"
             ft = item + "_4.png"
-            return AnimatedSprite([load_texture(f), load_texture(s), load_texture(fd), load_texture(ft)], max_ticks, x,
+            return AnimatedSprite([load_image(f), load_image(s), load_image(fd), load_image(ft)], max_ticks, x,
                                   y, hit_box)
         else:
             raise AttributeError

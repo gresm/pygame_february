@@ -1,5 +1,5 @@
+from typing import List, Tuple, Union, Optional, Dict, Type
 from enum import Enum
-from typing import List, Tuple, Union, Optional, Dict
 
 import pygame as p
 
@@ -109,8 +109,7 @@ class AnimatedSprite(p.sprite.Sprite):
 
     def next_frame(self):
         self.frame += self.steps
-        if self.frame >= len(self.frames):
-            self.frame = 0
+        self.frame = self.frame % len(self.frames)
         self.update_image()
         self.update_rect()
 
@@ -122,19 +121,42 @@ class AnimatedSprite(p.sprite.Sprite):
         return False
 
 
-def get_sprite(name: str, ticks: int, x: int = 0, y: int = 0, hit_box: Optional[Tuple[int, int, int, int]] = None) \
-        -> AnimatedSprite:
-    h = hit_box
-    if not hit_box and name in SPRITE_HIT_BOXES:
-        h = SPRITE_HIT_BOXES[name]
+def get_sprite(name: str, ticks: int, x: int = 0, y: int = 0, hit_box: Optional[Tuple[int, int, int, int]] = None,
+               steps: int = 0) -> AnimatedSprite:
+    # h = hit_box
+    # if not hit_box and name in SPRITE_HIT_BOXES:
+    #     h = SPRITE_HIT_BOXES[name]
+    #
+    # # noinspection PyProtectedMember
+    # s = Sprites._get_sprite(name, ticks, x, y, h)
+    f = name + ".png"
+    s = name + "_2.png"
+    fd = name + "_3.png"
+    ft = name + "_4.png"
+    return AnimatedSprite([p.image.load(f), p.image.load(s), p.image.load(fd), p.image.load(ft)], ticks, x,
+                          y, hit_box, steps)
 
-    # noinspection PyProtectedMember
-    s = Sprites._get_sprite(name, ticks, x, y, h)
-    return s
+
+def get_chained_sprite(name: str, ticks: int, animation_loops, x: int = 0, y: int = 0,
+                       hit_box: Optional[Tuple[int, int, int, int]] = None,
+                       steps: int = 0) -> "ChainedAnimatedSprite":
+    f = name + ".png"
+    s = name + "_2.png"
+    fd = name + "_3.png"
+    ft = name + "_4.png"
+    return ChainedAnimatedSprite([p.image.load(f), p.image.load(s), p.image.load(fd), p.image.load(ft)], ticks,
+                                 animation_loops, x, y, hit_box, steps)
 
 
 def get_player_sprite(ticks: int, x: int, y: int) -> "MultipleStateAnimatedSprite":
-    pass
+    p_i = get_sprite("player_idle", ticks, x, y)
+    p_f = get_sprite("player_fly", ticks, x, y)
+    p_j_a = get_sprite("player_jump_abort", ticks, x, y)
+    p_j_a_r = get_chained_sprite("player_jump_aboard", ticks, x, y, steps=-1)
+    p_c_s = get_sprite("player_ceiling_stick", ticks, x, y)
+    p_s_j = get_sprite("player_start_jump", ticks, x, y)
+
+    return MultipleStateAnimatedSprite({"idle": p_i, "fly": p_f})
 
 
 class Sprites(Enum):

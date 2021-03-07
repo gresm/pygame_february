@@ -1,5 +1,6 @@
-from typing import List, Tuple, Union, Optional, Dict, Type
+from typing import List, Tuple, Union, Optional, Dict
 from enum import Enum
+import os
 
 import pygame as p
 
@@ -121,19 +122,18 @@ class AnimatedSprite(p.sprite.Sprite):
         return False
 
 
+def load_texture(name: str):
+    print(os.path.abspath("") + "/asserts/graphics/" + name)
+    return p.image.load(os.path.abspath("") + "/asserts/graphics/" + name)
+
+
 def get_sprite(name: str, ticks: int, x: int = 0, y: int = 0, hit_box: Optional[Tuple[int, int, int, int]] = None,
                steps: int = 0) -> AnimatedSprite:
-    # h = hit_box
-    # if not hit_box and name in SPRITE_HIT_BOXES:
-    #     h = SPRITE_HIT_BOXES[name]
-    #
-    # # noinspection PyProtectedMember
-    # s = Sprites._get_sprite(name, ticks, x, y, h)
     f = name + ".png"
     s = name + "_2.png"
     fd = name + "_3.png"
     ft = name + "_4.png"
-    return AnimatedSprite([p.image.load(f), p.image.load(s), p.image.load(fd), p.image.load(ft)], ticks, x,
+    return AnimatedSprite([load_texture(f), load_texture(s), load_texture(fd), load_texture(ft)], ticks, x,
                           y, hit_box, steps)
 
 
@@ -144,7 +144,7 @@ def get_chained_sprite(name: str, ticks: int, animation_loops, x: int = 0, y: in
     s = name + "_2.png"
     fd = name + "_3.png"
     ft = name + "_4.png"
-    return ChainedAnimatedSprite([p.image.load(f), p.image.load(s), p.image.load(fd), p.image.load(ft)], ticks,
+    return ChainedAnimatedSprite([load_texture(f), load_texture(s), load_texture(fd), load_texture(ft)], ticks,
                                  animation_loops, x, y, hit_box, steps)
 
 
@@ -152,11 +152,11 @@ def get_player_sprite(ticks: int, x: int, y: int) -> "MultipleStateAnimatedSprit
     p_i = get_sprite("player_idle", ticks, x, y)
     p_f = get_sprite("player_fly", ticks, x, y)
     p_j_a = get_sprite("player_jump_abort", ticks, x, y)
-    p_j_a_r = get_chained_sprite("player_jump_aboard", ticks, x, y, steps=-1)
+    p_j_a_r = get_chained_sprite("player_jump_abort", ticks, x, y, steps=-1)
     p_c_s = get_sprite("player_ceiling_stick", ticks, x, y)
     p_s_j = get_sprite("player_start_jump", ticks, x, y)
 
-    return MultipleStateAnimatedSprite({"idle": p_i, "fly": p_f})
+    return MultipleStateAnimatedSprite({"idle": (p_i, "idle"), "fly": (p_f, "fly")}, "idle")
 
 
 class Sprites(Enum):
@@ -169,12 +169,11 @@ class Sprites(Enum):
     def _get_sprite(item: str, max_ticks: int, x: int, y: int, hit_box: Optional[Tuple[int, int, int, int]] = None) \
             -> "AnimatedSprite":
         if item in SPRITES:
-            item = "asserts/graphics/" + item
             f = item + ".png"
             s = item + "_2.png"
             fd = item + "_3.png"
             ft = item + "_4.png"
-            return AnimatedSprite([p.image.load(f), p.image.load(s), p.image.load(fd), p.image.load(ft)], max_ticks, x,
+            return AnimatedSprite([load_texture(f), load_texture(s), load_texture(fd), load_texture(ft)], max_ticks, x,
                                   y, hit_box)
         else:
             raise AttributeError

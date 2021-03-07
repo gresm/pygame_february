@@ -35,9 +35,9 @@ class BaseApp:
                     self.delta -= 1 / self.max_tps
                     # running loop
                     self.loop()
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
             self.on_exit()
-            raise KeyboardInterrupt
+            raise KeyboardInterrupt from e
 
         self.on_exit()
         return

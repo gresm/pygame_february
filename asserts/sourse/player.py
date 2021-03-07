@@ -149,12 +149,12 @@ class Level:
         le = maps.load_level(level)
         if not le:
             raise EndGame(True)
-        self.spawn = le[0]
-        self.win_cords = le[1]
+        self.spawn = Vector2.deserialize(le[0])
+        self.win_cords = Vector2.deserialize(le[1])
         self.map = le[2]
         self.map_sprites_group = GlobalizedSprites()
-        self.win_sprite = graphics.get_sprite("win", settings.MAX_ANIMATION_TICKS, self.win_cords[0] * 32,
-                                              self.win_cords[1] * 32)
+        self.win_sprite = graphics.get_sprite("win", settings.MAX_ANIMATION_TICKS, self.win_cords.x * 32,
+                                              self.win_cords.y * 32)
         self.win_group = p.sprite.Group()
         self.walls = p.sprite.Group()
         self.spikes = p.sprite.Group()
@@ -200,13 +200,13 @@ class App(base_app.BaseApp):
                  width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
         super().__init__(title, icon_path, height, width, bg_color, create_new_screen)
         self.level = Level(1)
-        self.player = Player(self.level.spawn[0], self.level.spawn[1],
+        self.player = Player(self.level.spawn.x, self.level.spawn.y,
                              graphics.get_player_sprite(settings.PLAYER_ANIMATION_TICKS, *self.spawn), self.level,
                              p.Rect(*self.spawn, *settings.PLAYER_SIZE))
 
     @property
     def spawn(self):
-        return self.level.spawn[0], self.level.spawn[1]
+        return self.level.spawn.x, self.level.spawn.y
 
     def on_key_pressed(self, key_code: int):
         if key_code == p.K_ESCAPE:

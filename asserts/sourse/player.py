@@ -19,7 +19,7 @@ class Player(p.sprite.Sprite):
         self.time = 0
         self.hit_box = hit_box.copy() if hit_box else player_sprite.image.get_rect()
         self.level = level
-        self.cache: List[Tuple[int, int]] = [(self.pos.x, self.pos.y)]
+        self.cache: List[Tuple[int, int, ]] = [(self.pos.x, self.pos.y)]
         self.vel = Vector2(0, 0)
         self.on_ground = False
         self.touch_wall = False
@@ -86,9 +86,17 @@ class Player(p.sprite.Sprite):
     def loop(self):
         self.time += 1
         self.save_to_cache()
+        self.apply_velocity()
+        self.update()
+        if self.is_dead:
+            self.level.add_dead_player(self.dead())
+
+    def jump(self):
+        pass
 
 
-class KilledPlayer(Player):
+
+class KilledPlayer:
 
     def __init__(self, player: Player):
         self.time = 0
@@ -179,6 +187,9 @@ class Level:
             self.walls.add(tile)
         if tile_name == graphics.WIN:
             self.win_group.add(tile)
+
+    def add_dead_player(self, cache):
+        self.memories.append(cache)
 
     def get_walls_hit_box(self):
         ret = []

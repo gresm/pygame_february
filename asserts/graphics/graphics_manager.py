@@ -123,7 +123,6 @@ class AnimatedSprite(p.sprite.Sprite):
 
 
 def load_texture(name: str):
-    print(os.path.abspath("") + "/asserts/graphics/" + name)
     return p.image.load(os.path.abspath("") + "/asserts/graphics/" + name)
 
 

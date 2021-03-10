@@ -10,9 +10,10 @@ from asserts.sourse.vector2 import Vector2
 
 
 class Player(p.sprite.Sprite):
-    def __init__(self, x: int, y: int, player_sprite: graphics.MultipleStateAnimatedSprite, level: "Level",
+    def __init__(self, x: int, y: int, player_sprite: graphics.MultipleStateAnimatedSprite, level: "Level", app: "App",
                  hit_box: Optional[p.Rect] = None):
         super().__init__()
+        self.screen = app.screen
         self.sprite = player_sprite
         self.spawn = Vector2(x, y)
         self.__pos = Vector2(x, y)
@@ -28,6 +29,7 @@ class Player(p.sprite.Sprite):
         self.speed = settings.PLAYER_SPEED
         self.global_friction = settings.PLAYER_NORMAL_FRICTION
         self.ground_friction = settings.PLAYER_ON_GROUND_FRICTION
+        self.__jumping = False
 
     @property
     def pos(self):
@@ -40,6 +42,10 @@ class Player(p.sprite.Sprite):
     @property
     def rect(self):
         return self.sprite.rect
+
+    @property
+    def jumping(self):
+        return self.__jumping
 
     def apply_friction(self):
         if self.touch_wall:
@@ -92,8 +98,23 @@ class Player(p.sprite.Sprite):
             self.level.add_dead_player(self.dead())
 
     def jump(self):
+        self.__jumping = True
+        while self.__jumping:
+            self.pos.y += self.vel.y
+            self.vel.y -= self.gravity
+            self.__jumping = self.vel.y >= -10
+            yield
+        return
+
+    def right(self):
         pass
 
+    def left(self):
+        pass
+
+    def draw(self):
+        self.sprite.move(*self.pos.serialize())
+        self.screen.blit(self.sprite, area=self.rect)
 
 
 class KilledPlayer:
@@ -230,6 +251,7 @@ class App(base_app.BaseApp):
     def spawn(self):
         return self.level.spawn.x, self.level.spawn.y
 
+    # TODO: in version 3.10 it is added match (like switch because in the python!) CleanCode
     def on_key_pressed(self, key_code: int):
         if key_code == p.K_ESCAPE:
             self.on_exit()
@@ -249,3 +271,6 @@ class App(base_app.BaseApp):
     def game_loop(self):
         self.player.loop()
         self.level.loop()
+
+    def draw(self):
+        self.player.draw()

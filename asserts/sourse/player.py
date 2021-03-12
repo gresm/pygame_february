@@ -9,6 +9,11 @@ import asserts.sourse.settings as settings
 from asserts.sourse.vector2 import Vector2
 
 
+def print_debug(*args):
+    if __debug__:
+        print(*args)
+
+
 class Player(p.sprite.Sprite):
     def __init__(self, x: int, y: int, player_sprite: graphics.MultipleStateAnimatedSprite, level: "Level", app: "App",
                  hit_box: Optional[p.Rect] = None):
@@ -20,7 +25,7 @@ class Player(p.sprite.Sprite):
         self.time = 0
         self.hit_box = hit_box.copy() if hit_box else player_sprite.image.get_rect()
         self.level = level
-        self.cache: List[Tuple[int, int, ]] = [(self.pos.x, self.pos.y)]
+        self.cache: List[Tuple[int, int,]] = [(self.pos.x, self.pos.y)]
         self.vel = Vector2(0, 0)
         self.on_ground = False
         self.touch_wall = False
@@ -96,25 +101,34 @@ class Player(p.sprite.Sprite):
         self.update()
         if self.is_dead:
             self.level.add_dead_player(self.dead())
+        self.sprite.update()
+        self.sprite.move(*self.pos.serialize())
+        self.check_jump()
 
     def jump(self):
+        self.vel.y = 10
+        f_pos_y = self.pos.y
         self.__jumping = True
         while self.__jumping:
             self.pos.y += self.vel.y
             self.vel.y -= self.gravity
-            self.__jumping = self.vel.y >= -10
+            self.__jumping = self.pos.y >= f_pos_y
+            print_debug("jump func")
             yield
         return
 
+    def check_jump(self):
+        if self.jumping:
+            self.jump()
+
     def right(self):
-        pass
+        self.vel = 0
 
     def left(self):
         pass
 
     def draw(self):
-        self.sprite.move(*self.pos.serialize())
-        self.screen.blit(self.sprite, area=self.rect)
+        pass
 
 
 class KilledPlayer:
@@ -237,6 +251,9 @@ class Level:
         for dead_player in self.memories:
             dead_player.loop()
 
+    def draw(self):
+        pass
+
 
 class App(base_app.BaseApp):
     def __init__(self, title="load again", icon_path: AnyStr = "../graphics/icon.png", height: int = 300,
@@ -245,22 +262,32 @@ class App(base_app.BaseApp):
         self.level = Level(1)
         self.player = Player(self.level.spawn.x, self.level.spawn.y,
                              graphics.get_player_sprite(settings.PLAYER_ANIMATION_TICKS, *self.spawn), self.level,
-                             p.Rect(*self.spawn, *settings.PLAYER_SIZE))
+                             self, p.Rect(*self.spawn, *settings.PLAYER_SIZE))
 
     @property
     def spawn(self):
         return self.level.spawn.x, self.level.spawn.y
 
-    # TODO: in version 3.10 it is added match (like switch because in the python!) CleanCode
+    # TODO: in version 3.10 it is added match (like switch because in the python!) #CleanCode
     def on_key_pressed(self, key_code: int):
+        # match key_code:
+        #     case p.K_ESCAPE:
+        #         self.on_exit()
+        #     case (key_code == p.K_SPACE) or (key_code == p.K_W) or (key_code == p.K_UP):
+        #         self.player.jump()
+        #     case (key_code == p.K_A) or (key_code == p.K_LEFT):
+        #         self.player.left()
+        #     case (key_code == p.K_D) or (key_code == p.K_RIGHT):
+        #         self.player.right()
         if key_code == p.K_ESCAPE:
             self.on_exit()
-        if (key_code == p.K_SPACE) or (key_code == p.K_W) or (key_code == p.K_UP):
+        if (key_code == p.K_SPACE) or (key_code == p.K_w) or (key_code == p.K_UP):
             self.player.jump()
-        if (key_code == p.K_A) or (key_code == p.K_LEFT):
-            pass
-        if (key_code == p.K_D) or (key_code == p.K_RIGHT):
-            pass
+            print_debug("jump, pos: ", self.player.pos)
+        if (key_code == p.K_a) or (key_code == p.K_LEFT):
+            self.player.left()
+        if (key_code == p.K_d) or (key_code == p.K_RIGHT):
+            self.player.right()
 
     def on_key_down(self, key_code: int):
         pass
@@ -274,3 +301,4 @@ class App(base_app.BaseApp):
 
     def draw(self):
         self.player.draw()
+        self.level.draw()

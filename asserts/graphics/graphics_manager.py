@@ -1,6 +1,6 @@
-from typing import List, Tuple, Union, Optional, Dict
-from enum import Enum
 import os
+from enum import Enum
+from typing import List, Tuple, Union, Optional, Dict
 
 import pygame as p
 

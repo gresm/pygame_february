@@ -1,6 +1,8 @@
 from typing import Tuple, AnyStr as Path
-from asserts.graphics.graphics_manager import load_image
+
 import pygame
+
+from asserts.graphics.graphics_manager import load_image
 
 
 class BaseApp:

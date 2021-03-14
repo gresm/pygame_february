@@ -21,6 +21,7 @@ class Player(p.sprite.Sprite):
                  hit_box: Optional[p.Rect] = None):
         super().__init__()
         self.screen = app.screen
+        self.spawn = app.spawn
         self.sprite = player_sprite
         self.spawn = Vector2(x, y)
         self.__pos = Vector2(x, y)
@@ -75,6 +76,9 @@ class Player(p.sprite.Sprite):
 
         return center, left, right, top, down
 
+    def respawn(self):
+        self.__pos = self.spawn
+
     def update(self):
         center, left, right, top, down = self.get_debug()
         self.on_ground = down
@@ -99,22 +103,22 @@ class Player(p.sprite.Sprite):
         self.update()
         if self.is_dead:
             self.level.add_dead_player(self.dead())
+            raise EndGame(False)
         self.sprite.update()
         self.sprite.move(*self.pos.serialize())
         self.check_jump()
 
     def jump(self):
-        print("jump func")
-        self.vel.y = 10
-        f_pos_y = self.pos.y
-        self.__jumping = True
-        print_debug("jump func")
-        while self.__jumping:
-            self.pos.y += self.vel.y
-            self.vel.y -= self.gravity
-            self.__jumping = self.pos.y >= f_pos_y
-            print_debug("jump func while")
-            yield
+        pass
+        # # (!): Error: AttributeError: Can not set value in vector
+        # self.vel.y = 10
+        # f_pos_y = self.pos.y
+        # self.__jumping = True
+        # while self.__jumping:
+        #     self.pos.y += self.vel.y
+        #     self.vel.y -= self.gravity
+        #     self.__jumping = self.pos.y >= f_pos_y
+        #     yield
 
     def check_jump(self):
         if self.jumping:
@@ -282,7 +286,6 @@ class App(base_app.BaseApp):
             self.on_exit()
         if (key_code == p.K_SPACE) or (key_code == p.K_w) or (key_code == p.K_UP):
             self.player.jump()
-            print_debug("pos: ", self.player.pos)
         if (key_code == p.K_a) or (key_code == p.K_LEFT):
             self.player.left()
         if (key_code == p.K_d) or (key_code == p .K_RIGHT):
@@ -295,8 +298,14 @@ class App(base_app.BaseApp):
         pass
 
     def game_loop(self):
-        self.player.loop()
-        self.level.loop()
+        try:
+            self.player.loop()
+            self.level.loop()
+        except EndGame as e:
+            if e.win:
+                raise EndGame from e
+            else:
+                self.player.respawn()
 
     def draw(self):
         self.player.draw()

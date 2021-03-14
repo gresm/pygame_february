@@ -54,8 +54,9 @@ class Vector2:
             return cls(value[0], value[1])
         elif isinstance(value, (int, float)):
             return cls(value, value)
-        else:
+        elif issubclass(value.__class__, cls):
             return value
+        raise ValueError(f"Invalid type value {value.__class__}")
 
     def normalized(self) -> "Vector2":
         return self / self.size()

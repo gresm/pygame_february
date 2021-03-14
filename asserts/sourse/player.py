@@ -9,6 +9,8 @@ import asserts.sourse.settings as settings
 from asserts.sourse.vector2 import Vector2
 
 
+# noinspection PyUnusedLocal
+# noinspection PyUnreachableCode
 def print_debug(*args):
     if __debug__:
         print(*args)
@@ -25,7 +27,7 @@ class Player(p.sprite.Sprite):
         self.time = 0
         self.hit_box = hit_box.copy() if hit_box else player_sprite.image.get_rect()
         self.level = level
-        self.cache: List[Tuple[int, int,]] = [(self.pos.x, self.pos.y)]
+        self.cache: List[Tuple[int, int]] = [(self.pos.x, self.pos.y)]
         self.vel = Vector2(0, 0)
         self.on_ground = False
         self.touch_wall = False
@@ -81,9 +83,6 @@ class Player(p.sprite.Sprite):
     def collide_with_walls(self):
         return bool(self.hit_box.collidelistall(self.level.get_walls_hit_box()))
 
-    def apply_velocity(self):
-        self.__pos += self.vel
-
     def save_to_cache(self):
         self.cache.append((self.pos.x, self.pos.y))
 
@@ -97,7 +96,6 @@ class Player(p.sprite.Sprite):
     def loop(self):
         self.time += 1
         self.save_to_cache()
-        self.apply_velocity()
         self.update()
         if self.is_dead:
             self.level.add_dead_player(self.dead())
@@ -106,23 +104,24 @@ class Player(p.sprite.Sprite):
         self.check_jump()
 
     def jump(self):
+        print("jump func")
         self.vel.y = 10
         f_pos_y = self.pos.y
         self.__jumping = True
+        print_debug("jump func")
         while self.__jumping:
             self.pos.y += self.vel.y
             self.vel.y -= self.gravity
             self.__jumping = self.pos.y >= f_pos_y
-            print_debug("jump func")
+            print_debug("jump func while")
             yield
-        return
 
     def check_jump(self):
         if self.jumping:
             self.jump()
 
     def right(self):
-        self.vel = 0
+        pass
 
     def left(self):
         pass
@@ -283,10 +282,10 @@ class App(base_app.BaseApp):
             self.on_exit()
         if (key_code == p.K_SPACE) or (key_code == p.K_w) or (key_code == p.K_UP):
             self.player.jump()
-            print_debug("jump, pos: ", self.player.pos)
+            print_debug("pos: ", self.player.pos)
         if (key_code == p.K_a) or (key_code == p.K_LEFT):
             self.player.left()
-        if (key_code == p.K_d) or (key_code == p.K_RIGHT):
+        if (key_code == p.K_d) or (key_code == p .K_RIGHT):
             self.player.right()
 
     def on_key_down(self, key_code: int):

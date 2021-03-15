@@ -126,7 +126,7 @@ def load_image(name: str):
     return p.image.load(os.path.abspath("") + "/asserts/graphics/" + name)
 
 
-def get_sprite(name: str, ticks: int, x: int = 0, y: int = 0, hit_box: Optional[Tuple[int, int, int, int]] = None,
+def get_sprite(name: str, ticks: int, x: float = 0, y: float = 0, hit_box: Optional[Tuple[int, int, int, int]] = None,
                steps: int = 0) -> AnimatedSprite:
     f = name + ".png"
     s = name + "_2.png"

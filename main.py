@@ -1,13 +1,12 @@
 import pygame as p
 
-import asserts.sourse.player as player
+import asserts.sourse.app as player
 import asserts.sourse.settings as settings
 
 
 def main():
     p.init()
-    app = player.App(height=settings.HEIGHT, width=settings.WIDTH, bg_color=settings.BG_COLOR)
-    app.run()
+    player.App(height=settings.HEIGHT, width=settings.WIDTH, bg_color=settings.BG_COLOR).run()
     p.quit()
 
 

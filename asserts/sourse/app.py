@@ -1,12 +1,13 @@
 from typing import Union, Sequence, List, AnyStr, Tuple, Optional
 
 import pygame as p
+from pygame.math import Vector2
+
 
 import asserts.graphics.graphics_manager as graphics
 import asserts.maps.maps_manager as maps
 import asserts.sourse.base_app as base_app
 import asserts.sourse.settings as settings
-from asserts.sourse.vector2 import Vector2
 
 
 # noinspection PyUnusedLocal
@@ -17,19 +18,16 @@ def print_debug(*args):
 
 
 class Player(p.sprite.Sprite):
-    def __init__(self, x: int, y: int, player_sprite: graphics.MultipleStateAnimatedSprite, level: "Level", app: "App",
+    def __init__(self, x: float, y: float, player_sprite: graphics.MultipleStateAnimatedSprite, app: "App",
                  hit_box: Optional[p.Rect] = None):
         super().__init__()
-        self.screen = app.screen
-        self.spawn = app.spawn
         self.sprite = player_sprite
-        self.spawn = Vector2(x, y)
+        self.app = app
         self.__pos = Vector2(x, y)
         self.time = 0
         self.hit_box = hit_box.copy() if hit_box else player_sprite.image.get_rect()
-        self.level = level
-        self.cache: List[Tuple[int, int]] = [(self.pos.x, self.pos.y)]
-        self.vel = Vector2(0, 0)
+        self.cache: List[Vector2] = [self.pos]
+        self.vel = Vector2()
         self.on_ground = False
         self.touch_wall = False
         self.gravity = settings.GRAVITY
@@ -38,6 +36,18 @@ class Player(p.sprite.Sprite):
         self.global_friction = settings.PLAYER_NORMAL_FRICTION
         self.ground_friction = settings.PLAYER_ON_GROUND_FRICTION
         self.__jumping = False
+
+    @property
+    def level(self):
+        return self.app.level
+
+    @property
+    def screen(self):
+        return self.app.screen
+
+    @property
+    def spawn(self):
+        return self.app.spawn
 
     @property
     def pos(self):
@@ -88,7 +98,7 @@ class Player(p.sprite.Sprite):
         return bool(self.hit_box.collidelistall(self.level.get_walls_hit_box()))
 
     def save_to_cache(self):
-        self.cache.append((self.pos.x, self.pos.y))
+        self.cache.append(self.pos.x)
 
     @property
     def is_dead(self) -> bool:
@@ -103,22 +113,23 @@ class Player(p.sprite.Sprite):
         self.update()
         if self.is_dead:
             self.level.add_dead_player(self.dead())
-            raise EndGame(False)
+            self.respawn()
+            raise EndGame()
         self.sprite.update()
-        self.sprite.move(*self.pos.serialize())
+        self.sprite.move(*self.pos.xy)
         self.check_jump()
 
     def jump(self):
-        pass
-        # # (!): Error: AttributeError: Can not set value in vector
-        # self.vel.y = 10
-        # f_pos_y = self.pos.y
-        # self.__jumping = True
-        # while self.__jumping:
-        #     self.pos.y += self.vel.y
-        #     self.vel.y -= self.gravity
-        #     self.__jumping = self.pos.y >= f_pos_y
-        #     yield
+        self.vel.y = 10
+        f_pos_y = self.pos.y
+        print_debug("jumpo")
+        self.__jumping = True
+        while self.__jumping:
+            print_debug("jumpo w")
+            self.pos.y += self.vel.y
+            self.vel.y -= self.gravity
+            self.__jumping = self.pos.y >= f_pos_y
+            yield
 
     def check_jump(self):
         if self.jumping:
@@ -167,14 +178,13 @@ class KilledPlayer:
 class GlobalizedSprites(p.sprite.Group):
     def __init__(self, *sprites: Union[p.sprite.Sprite, Sequence[p.sprite.Sprite]]):
         super().__init__(*sprites)
-        self.global_x = 0
-        self.global_y = 0
+        self.global_pos = Vector2()
 
     def update(self, *args, **kwargs) -> None:
         # noinspection PyTypeChecker
         e: List[Union[graphics.AnimatedSprite, graphics.MultipleStateAnimatedSprite]] = self.sprites()
         for v in e:
-            v.set_offset(self.global_x, self.global_y)
+            v.set_offset(*self.global_pos.xy)
         super().update(*args, **kwargs)
 
     def get_hit_boxes(self):
@@ -201,8 +211,8 @@ class Level:
         le = maps.load_level(level)
         if not le:
             raise EndGame(True)
-        self.spawn = Vector2.deserialize(le[0])
-        self.win_cords = Vector2.deserialize(le[1])
+        self.spawn = Vector2(*le[0])
+        self.win_cords = Vector2(*le[1])
         self.map = le[2]
         self.map_sprites_group = GlobalizedSprites()
         self.win_sprite = graphics.get_sprite("win", settings.MAX_ANIMATION_TICKS, self.win_cords.x * 32,
@@ -216,6 +226,7 @@ class Level:
                                                   settings.MAX_ANIMATION_TICKS, x * 32, y * 32),
                               graphics.SPRITES[self.map[x][y]])
         self.memories = []
+        self.level = level
 
     def add_tile(self, tile: graphics.AnimatedSprite, tile_name):
         self.map_sprites_group.add(tile)
@@ -255,7 +266,11 @@ class Level:
             dead_player.loop()
 
     def draw(self):
-        pass
+        for dead_player in self.memories:
+            dead_player.draw()
+
+    def next_level(self):
+        return Level(self.level+1)
 
 
 class App(base_app.BaseApp):
@@ -264,8 +279,8 @@ class App(base_app.BaseApp):
         super().__init__(title, icon_path, height, width, bg_color, create_new_screen)
         self.level = Level(1)
         self.player = Player(self.level.spawn.x, self.level.spawn.y,
-                             graphics.get_player_sprite(settings.PLAYER_ANIMATION_TICKS, *self.spawn), self.level,
-                             self, p.Rect(*self.spawn, *settings.PLAYER_SIZE))
+                             graphics.get_player_sprite(settings.PLAYER_ANIMATION_TICKS, *self.spawn), self,
+                             p.Rect(*self.spawn, *settings.PLAYER_SIZE))
 
     @property
     def spawn(self):
@@ -288,7 +303,7 @@ class App(base_app.BaseApp):
             self.player.jump()
         if (key_code == p.K_a) or (key_code == p.K_LEFT):
             self.player.left()
-        if (key_code == p.K_d) or (key_code == p .K_RIGHT):
+        if (key_code == p.K_d) or (key_code == p.K_RIGHT):
             self.player.right()
 
     def on_key_down(self, key_code: int):
@@ -303,9 +318,8 @@ class App(base_app.BaseApp):
             self.level.loop()
         except EndGame as e:
             if e.win:
-                raise EndGame from e
-            else:
-                self.player.respawn()
+                self.level = self.level.next_level()
+            self.player.respawn()
 
     def draw(self):
         self.player.draw()

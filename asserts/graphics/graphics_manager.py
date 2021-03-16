@@ -32,7 +32,7 @@ WIN = "win"
 
 
 class AnimatedSprite(p.sprite.Sprite):
-    def __init__(self, frames: Union[List[p.Surface], Tuple[p.Surface]], max_ticks: int, x: int = 0, y: int = 0,
+    def __init__(self, frames: Union[List[p.Surface], Tuple[p.Surface]], max_ticks: int, x: float = 0, y: float = 0,
                  hit_box: Optional[p.Rect] = None, steps: int = 1, *groups: p.sprite.AbstractGroup):
         super().__init__(*groups)
         self._real_x = x
@@ -71,11 +71,11 @@ class AnimatedSprite(p.sprite.Sprite):
         h.y += self.x
         return h
 
-    def set_offset(self, x: int, y: int):
+    def set_offset(self, x: float, y: float):
         self.offset_x = x
         self.offset_y = y
 
-    def move_offset(self, x: int, y: int):
+    def move_offset(self, x: float, y: float):
         self.offset_x += x
         self.offset_y += y
 
@@ -93,11 +93,11 @@ class AnimatedSprite(p.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
-    def goto(self, x: int, y: int):
+    def goto(self, x: float, y: float):
         self.x = x
         self.y = y
 
-    def move(self, x: int, y: int):
+    def move(self, x: float, y: float):
         self.x += x
         self.y += y
 
@@ -110,7 +110,7 @@ class AnimatedSprite(p.sprite.Sprite):
 
     def next_frame(self):
         self.frame += self.steps
-        self.frame = self.frame % len(self.frames)
+        self.frame %= len(self.frames)
         self.update_image()
         self.update_rect()
 
@@ -136,7 +136,7 @@ def get_sprite(name: str, ticks: int, x: float = 0, y: float = 0, hit_box: Optio
                           y, hit_box, steps)
 
 
-def get_chained_sprite(name: str, ticks: int, animation_loops, x: int = 0, y: int = 0,
+def get_chained_sprite(name: str, ticks: int, animation_loops, x: float = 0, y: float = 0,
                        hit_box: Optional[Tuple[int, int, int, int]] = None,
                        steps: int = 0) -> "ChainedAnimatedSprite":
     f = name + ".png"
@@ -147,7 +147,8 @@ def get_chained_sprite(name: str, ticks: int, animation_loops, x: int = 0, y: in
                                  animation_loops, x, y, hit_box, steps)
 
 
-def get_player_sprite(ticks: int, x: int, y: int) -> "MultipleStateAnimatedSprite":
+# noinspection PyUnusedLocal
+def get_player_sprite(ticks: int, x: float, y: float) -> "MultipleStateAnimatedSprite":
     p_i = get_sprite("player_idle", ticks, x, y)
     p_f = get_sprite("player_fly", ticks, x, y)
     p_j_a = get_sprite("player_jump_abort", ticks, x, y)
@@ -165,7 +166,7 @@ class Sprites(Enum):
         return object.__getattribute__(self, "_get_sprite")(item)
 
     @staticmethod
-    def _get_sprite(item: str, max_ticks: int, x: int, y: int, hit_box: Optional[Tuple[int, int, int, int]] = None) \
+    def _get_sprite(item: str, max_ticks: int, x: float, y: float, hit_box: Optional[Tuple[int, int, int, int]] = None) \
             -> "AnimatedSprite":
         if item in SPRITES:
             f = item + ".png"
@@ -202,7 +203,7 @@ class Sprites(Enum):
 
 class ChainedAnimatedSprite(AnimatedSprite):
     def __init__(self, frames: Union[List[p.Surface], Tuple[p.Surface]], max_ticks: int,
-                 max_animation_loops: int = 1, x: int = 0, y: int = 0, hit_box: Optional[p.Rect] = None, steps: int = 1,
+                 max_animation_loops: int = 1, x: float = 0, y: float = 0, hit_box: Optional[p.Rect] = None, steps: int = 1,
                  *groups: p.sprite.AbstractGroup):
         super().__init__(frames, max_ticks, x, y, hit_box, steps, *groups)
         self.max_animation_loops = max_animation_loops
@@ -259,28 +260,31 @@ class MultipleStateAnimatedSprite(p.sprite.Sprite):
     def hit_box_default(self):
         return self.state.hit_box_default
 
-    def set_state(self, state: str):
+    @state.setter
+    def state(self, state: str):
         self._state = self.states[state]
 
-    def move(self, x: int, y: int):
+    def move(self, x: float, y: float):
         self.state.move(x, y)
 
-    def goto(self, x: int, y: int):
+    def goto(self, x: float, y: float):
         self.state.goto(x, y)
 
     def update(self, *args, **kwargs) -> None:
         self.tick()
+        self.state.update()
 
     def tick(self) -> bool:
         if self.state.next_state():
-            self.set_state(self.next_state_name)
+            self.state = self.next_state_name
         return self.state.tick()
 
     def collide_with(self, other: Union["AnimatedSprite", "MultipleStateAnimatedSprite"]):
         return self.rect.colliderect(other.hit_box)
 
-    def set_offset(self, x: int, y: int):
+    def set_offset(self, x: float, y: float):
         self.state.set_offset(x, y)
 
-    def move_offset(self, x: int, y: int):
+    def move_offset(self, x: float, y: float):
         self.state.move_offset(x, y)
+

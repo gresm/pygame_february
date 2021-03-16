@@ -1,4 +1,6 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+
+from pygame.math import Vector2
 
 from asserts.sourse.csv_reader import CsvOpen
 
@@ -8,21 +10,23 @@ LEVELS = (
     "asserts/maps/level3.csv"
 )
 
+mapT = List[List[int]]
 
-def load_csv(file_path) -> List[List[int]]:
+
+def load_csv(file_path) -> mapT:
     with CsvOpen(file_path, "r") as file:
         data = list(map(lambda e: list(map(int, e)), file))
     return data
 
 
-def load_level(level: int):
+def load_level(level: int) -> Optional[Tuple[Vector2, Vector2, mapT]]:
     str_l = f"asserts/maps/level{level}.csv"
     if str_l not in LEVELS:
-        return
+        return None
     csv = load_csv(str_l)
     # noinspection PyTypeChecker
     info: Tuple[int, int, int, int] = tuple(csv[0])
-    spawn = info[0], info[1]
-    win = info[2], info[2]
+    spawn = Vector2(float(info[0]), float(info[1]))
+    win = Vector2(float(info[2]), float(info[3]))
     rest = csv[1:]
     return spawn, win, rest

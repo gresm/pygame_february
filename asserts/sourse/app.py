@@ -3,7 +3,6 @@ from typing import Union, Sequence, List, AnyStr, Tuple, Optional
 import pygame as p
 from pygame.math import Vector2
 
-
 import asserts.graphics.graphics_manager as graphics
 import asserts.maps.maps_manager as maps
 import asserts.sourse.base_app as base_app
@@ -67,9 +66,9 @@ class Player(p.sprite.Sprite):
 
     def apply_friction(self):
         if self.touch_wall:
-            self.__pos *= self.ground_friction
+            self.__pos = self.__pos * self.ground_friction
         else:
-            self.vel *= self.global_friction
+            self.vel = self.vel * self.global_friction
 
     def get_debug(self) -> Tuple[bool, bool, bool, bool, bool]:
         center = self.collide_with_walls()
@@ -93,16 +92,18 @@ class Player(p.sprite.Sprite):
         center, left, right, top, down = self.get_debug()
         self.on_ground = down
         self.touch_wall = any([left, right, top, down])
+        self.sprite.update()
+        self.sprite.goto(*self.pos)
 
     def collide_with_walls(self):
-        return bool(self.hit_box.collidelistall(self.level.get_walls_hit_box()))
+        return bool(self.hit_box.collidelistall(self.level.walls_hit_box))
 
     def save_to_cache(self):
-        self.cache.append(self.pos.x)
+        self.cache.append(self.pos)
 
     @property
     def is_dead(self) -> bool:
-        return bool(self.hit_box.collidelist(self.level.get_spikes_hit_box()))
+        return bool(self.hit_box.collidelist(self.level.spikes_hit_box))
 
     def dead(self):
         return KilledPlayer(self)
@@ -113,22 +114,19 @@ class Player(p.sprite.Sprite):
         self.update()
         if self.is_dead:
             self.level.add_dead_player(self.dead())
-            self.respawn()
             raise EndGame()
-        self.sprite.update()
-        self.sprite.move(*self.pos.xy)
+        if self.hit_box.collidelistall(self.level.wins_hit_box):
+            raise EndGame(True)
         self.check_jump()
 
     def jump(self):
-        self.vel.y = 10
-        f_pos_y = self.pos.y
-        print_debug("jumpo")
+        print_debug("jump")
+        self.vel.update(y=10)
         self.__jumping = True
         while self.__jumping:
-            print_debug("jumpo w")
-            self.pos.y += self.vel.y
-            self.vel.y -= self.gravity
-            self.__jumping = self.pos.y >= f_pos_y
+            self.pos.update(y=self.pos.y + self.vel.y)
+            self.vel.update(y=self.vel.y + self.gravity)
+            self.__jumping = self.on_ground
             yield
 
     def check_jump(self):
@@ -151,7 +149,7 @@ class KilledPlayer:
         self.time = 0
         self.cache = player.cache
         self.__spawn = player.spawn
-        self.__pos = self.__spawn
+        self.__pos = player.pos
         self.__end_pos = player.pos
         self.__go = True
 
@@ -173,6 +171,9 @@ class KilledPlayer:
     def loop(self):
         self.time += 1
         self.load_from_cache()
+
+    def respawn(self):
+        self.__pos = self.__spawn
 
 
 class GlobalizedSprites(p.sprite.Group):
@@ -207,12 +208,14 @@ class EndGame(Exception):
 
 
 class Level:
+    levels = range(3)
+
     def __init__(self, level: int):
-        le = maps.load_level(level)
-        if not le:
+        if level not in self.levels:
             raise EndGame(True)
-        self.spawn = Vector2(*le[0])
-        self.win_cords = Vector2(*le[1])
+        le = maps.load_level(level)
+        self.spawn = le[0]
+        self.win_cords = le[1]
         self.map = le[2]
         self.map_sprites_group = GlobalizedSprites()
         self.win_sprite = graphics.get_sprite("win", settings.MAX_ANIMATION_TICKS, self.win_cords.x * 32,
@@ -240,37 +243,45 @@ class Level:
     def add_dead_player(self, cache):
         self.memories.append(cache)
 
-    def get_walls_hit_box(self):
+    @property
+    def walls_hit_box(self):
         ret = []
         e: Union[graphics.MultipleStateAnimatedSprite, graphics.AnimatedSprite]
         for e in self.walls.sprites():
             ret.append(e.hit_box)
         return ret
 
-    def get_spikes_hit_box(self):
+    @property
+    def spikes_hit_box(self):
         ret = []
         e: Union[graphics.MultipleStateAnimatedSprite, graphics.AnimatedSprite]
         for e in self.spikes.sprites():
             ret.append(e.hit_box)
         return ret
 
-    def get_wins_hit_box(self):
+    @property
+    def wins_hit_box(self):
         ret = []
         e: Union[graphics.MultipleStateAnimatedSprite, graphics.AnimatedSprite]
         for e in self.spikes.sprites():
-            ret.append(e.hit_box)
+            if Vector2(e.x, e.y) == self.win_cords:
+                ret.append(e.hit_box)
         return ret
-
-    def loop(self):
-        for dead_player in self.memories:
-            dead_player.loop()
 
     def draw(self):
         for dead_player in self.memories:
             dead_player.draw()
 
-    def next_level(self):
-        return Level(self.level+1)
+    def next_level(self) -> "Level":
+        return Level(self.level + 1)
+
+    def respawn(self):
+        for dead_player in self.memories:
+            dead_player.respawn()
+
+    def loop(self):
+        for dead_player in self.memories:
+            dead_player.loop()
 
 
 class App(base_app.BaseApp):
@@ -320,6 +331,7 @@ class App(base_app.BaseApp):
             if e.win:
                 self.level = self.level.next_level()
             self.player.respawn()
+            self.level.respawn()
 
     def draw(self):
         self.player.draw()

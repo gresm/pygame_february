@@ -1,15 +1,39 @@
 import os
 from enum import Enum
-from typing import List, Tuple, Union, Optional, Dict
+from typing import List, Tuple, Union, Optional, Dict, AnyStr
 
 import pygame as p
 
 SPRITES = (
-    "spikes_floor", "spikes_left", "spikes_right", "spikes_ceiling", "spikes_floating", "wall_bottom",
+    "bg", "spikes_floor", "spikes_left", "spikes_right", "spikes_ceiling", "spikes_floating", "wall_bottom",
     "wall_bottom_left", "wall_bottom_right", "wall_center", "wall_flat_top", "wall_flat_top_left_corner",
     "wall_flat_top_right_corner", "wall_floating", "wall_floating_both", "wall_floating_left",
     "wall_floating_right", "wall_left_n_right", "wall_open_left", "wall_open_right", "wall_top", "win"
 )
+SPRITES_D = {
+    0: "bg",
+    1: "spikes_floor",
+    2: "spikes_left",
+    3: "spikes_right",
+    4: "spikes_ceiling",
+    5: "spikes_floating",
+    6: "wall_bottom",
+    7: "wall_bottom_left",
+    8: "wall_bottom_right",
+    9: "wall_center",
+    10: "wall_flat_top",
+    11: "wall_flat_top_left_corner",
+    12: "wall_flat_top_right_corner",
+    13: "wall_floating",
+    14: "wall_floating_both",
+    15: "wall_floating_left",
+    16: "wall_floating_right",
+    17: "wall_left_n_right",
+    18: "wall_open_left",
+    19: "wall_open_right",
+    20: "wall_top",
+    21: "win",
+}
 
 SPIKES = (
     "spikes_floor", "spikes_left", "spikes_right", "spikes_ceiling", "spikes_floating"
@@ -203,7 +227,8 @@ class Sprites(Enum):
 
 class ChainedAnimatedSprite(AnimatedSprite):
     def __init__(self, frames: Union[List[p.Surface], Tuple[p.Surface]], max_ticks: int,
-                 max_animation_loops: int = 1, x: float = 0, y: float = 0, hit_box: Optional[p.Rect] = None, steps: int = 1,
+                 max_animation_loops: int = 1, x: float = 0, y: float = 0, hit_box: Optional[p.Rect] = None,
+                 steps: int = 1,
                  *groups: p.sprite.AbstractGroup):
         super().__init__(frames, max_ticks, x, y, hit_box, steps, *groups)
         self.max_animation_loops = max_animation_loops
@@ -287,4 +312,3 @@ class MultipleStateAnimatedSprite(p.sprite.Sprite):
 
     def move_offset(self, x: float, y: float):
         self.state.move_offset(x, y)
-

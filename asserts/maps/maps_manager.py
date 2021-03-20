@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 
 from pygame.math import Vector2
 
@@ -10,7 +10,7 @@ LEVELS = (
     "asserts/maps/level3.csv"
 )
 
-mapT = List[List[int]]
+mapT = List[List[Union[int, float]]]
 
 
 def load_csv(file_path) -> mapT:
@@ -28,5 +28,5 @@ def load_level(level: int) -> Optional[Tuple[Vector2, Vector2, mapT]]:
     info: Tuple[int, int, int, int] = tuple(csv[0])
     spawn = Vector2(float(info[0]), float(info[1]))
     win = Vector2(float(info[2]), float(info[3]))
-    rest = csv[1:]
+    rest: mapT = csv[1:]
     return spawn, win, rest

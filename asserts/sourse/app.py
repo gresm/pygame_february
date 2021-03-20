@@ -2,8 +2,10 @@ from typing import Union, Sequence, List, AnyStr, Tuple, Optional
 
 import pygame as p
 from pygame.math import Vector2
+from pygame.sprite import Sprite
 
 import asserts.graphics.graphics_manager as graphics
+from asserts.graphics.graphics_manager import AnimatedSprite, MultipleStateAnimatedSprite
 import asserts.maps.maps_manager as maps
 import asserts.sourse.base_app as base_app
 import asserts.sourse.settings as settings
@@ -16,7 +18,7 @@ def print_debug(*args):
         print(*args)
 
 
-class Player(p.sprite.Sprite):
+class Player(Sprite):
     def __init__(self, x: float, y: float, player_sprite: graphics.MultipleStateAnimatedSprite, app: "App",
                  hit_box: Optional[p.Rect] = None):
         super().__init__()
@@ -177,7 +179,7 @@ class KilledPlayer:
 
 
 class GlobalizedSprites(p.sprite.Group):
-    def __init__(self, *sprites: Union[p.sprite.Sprite, Sequence[p.sprite.Sprite]]):
+    def __init__(self, *sprites: Union[Sprite, Sequence[Sprite]]):
         super().__init__(*sprites)
         self.global_pos = Vector2()
 
@@ -210,13 +212,14 @@ class EndGame(Exception):
 class Level:
     levels = range(3)
 
-    def __init__(self, level: int):
+    def __init__(self, level: int, app: "App"):
+        self.app = app
         if level not in self.levels:
             raise EndGame(True)
         le = maps.load_level(level)
         self.spawn = le[0]
         self.win_cords = le[1]
-        self.map = le[2]
+        self.map: List[List[Union[int, float, AnimatedSprite]]] = le[2]
         self.map_sprites_group = GlobalizedSprites()
         self.win_sprite = graphics.get_sprite("win", settings.MAX_ANIMATION_TICKS, self.win_cords.x * 32,
                                               self.win_cords.y * 32)
@@ -227,11 +230,11 @@ class Level:
             for y in range(len(self.map[x])):
                 self.add_tile(graphics.get_sprite(graphics.SPRITES[self.map[x][y]],
                                                   settings.MAX_ANIMATION_TICKS, x * 32, y * 32),
-                              graphics.SPRITES[self.map[x][y]])
+                              graphics.SPRITES[self.map[x][y]], Vector2(x, y))
         self.memories = []
         self.level = level
 
-    def add_tile(self, tile: graphics.AnimatedSprite, tile_name):
+    def add_tile(self, tile: AnimatedSprite, tile_name, pos: Vector2):
         self.map_sprites_group.add(tile)
         if tile_name in graphics.SPIKES:
             self.spikes.add(tile)
@@ -239,6 +242,9 @@ class Level:
             self.walls.add(tile)
         if tile_name == graphics.WIN:
             self.win_group.add(tile)
+        # FIXME param ticks and steps, I didn't know what to give
+        self.map[pos.x][pos.y] = graphics.get_sprite(tile_name, 0, x=pos.x, y=pos.y,
+                                                     hit_box=graphics.SPRITE_HIT_BOXES.get(tile_name))
 
     def add_dead_player(self, cache):
         self.memories.append(cache)
@@ -246,7 +252,7 @@ class Level:
     @property
     def walls_hit_box(self):
         ret = []
-        e: Union[graphics.MultipleStateAnimatedSprite, graphics.AnimatedSprite]
+        e: Union[MultipleStateAnimatedSprite, AnimatedSprite]
         for e in self.walls.sprites():
             ret.append(e.hit_box)
         return ret
@@ -254,7 +260,7 @@ class Level:
     @property
     def spikes_hit_box(self):
         ret = []
-        e: Union[graphics.MultipleStateAnimatedSprite, graphics.AnimatedSprite]
+        e: Union[MultipleStateAnimatedSprite, AnimatedSprite]
         for e in self.spikes.sprites():
             ret.append(e.hit_box)
         return ret
@@ -262,18 +268,26 @@ class Level:
     @property
     def wins_hit_box(self):
         ret = []
-        e: Union[graphics.MultipleStateAnimatedSprite, graphics.AnimatedSprite]
+        e: Union[MultipleStateAnimatedSprite, AnimatedSprite]
         for e in self.spikes.sprites():
             if Vector2(e.x, e.y) == self.win_cords:
                 ret.append(e.hit_box)
         return ret
+    
+    @property
+    def screen(self):
+        return self.app.screen
 
     def draw(self):
         for dead_player in self.memories:
             dead_player.draw()
+        for y in range(len(self.map)):
+            for x in range(len(self.map[y])):
+                block = self.map[x][y]
+                self.screen.blit(block.image, block.image.get_rect())
 
-    def next_level(self) -> "Level":
-        return Level(self.level + 1)
+    def next_level(self):
+        self.app.level = Level(self.level + 1, self.app)
 
     def respawn(self):
         for dead_player in self.memories:
@@ -288,7 +302,7 @@ class App(base_app.BaseApp):
     def __init__(self, title="load again", icon_path: AnyStr = "../graphics/icon.png", height: int = 300,
                  width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
         super().__init__(title, icon_path, height, width, bg_color, create_new_screen)
-        self.level = Level(1)
+        self.level = Level(1, self)
         self.player = Player(self.level.spawn.x, self.level.spawn.y,
                              graphics.get_player_sprite(settings.PLAYER_ANIMATION_TICKS, *self.spawn), self,
                              p.Rect(*self.spawn, *settings.PLAYER_SIZE))
@@ -329,7 +343,7 @@ class App(base_app.BaseApp):
             self.level.loop()
         except EndGame as e:
             if e.win:
-                self.level = self.level.next_level()
+                self.level.next_level()
             self.player.respawn()
             self.level.respawn()
 

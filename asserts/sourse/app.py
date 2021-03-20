@@ -284,7 +284,7 @@ class Level:
         for y in range(len(self.map)):
             for x in range(len(self.map[y])):
                 block = self.map[x][y]
-                self.screen.blit(block.image, block.image.get_rect())
+                self.screen.blit(block.image, block.rect)
 
     def next_level(self):
         self.app.level = Level(self.level + 1, self.app)

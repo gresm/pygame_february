@@ -11,7 +11,7 @@ class Sounds(Enum):
 class SoundPlayer:
     def __init__(self, sound_path: Union[str, Sounds], loops: int = 0, sound_layer: int = -1, max_time: int = 0,
                  fade_ms: int = 0):
-        self.sound_path = sound_path if isinstance(sound_path, str) else sound_path.value
+        self.sound_path = sound_path.value if isinstance(sound_path, Sounds) else sound_path
         self.sound_layer = self._get_fixed_sound_layer(sound_layer)
         self.loops = loops
         self.sound = p.mixer.Sound(self.sound_path)

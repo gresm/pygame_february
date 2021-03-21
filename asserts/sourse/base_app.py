@@ -51,12 +51,14 @@ class BaseApp:
         # game loop
         self.game_loop()
 
+        # checking input
+        self.handle_input()
+
         # drawing
         self.draw_background()
         self.draw()
 
-        # checking input
-        self.handle_input()
+        pygame.display.flip()
 
     def handle_input(self):
         keys_pressed = pygame.key.get_pressed()

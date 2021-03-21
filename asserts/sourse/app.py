@@ -5,17 +5,19 @@ from pygame.math import Vector2
 from pygame.sprite import Sprite
 
 import asserts.graphics.graphics_manager as graphics
-from asserts.graphics.graphics_manager import AnimatedSprite, MultipleStateAnimatedSprite
 import asserts.maps.maps_manager as maps
 import asserts.sourse.base_app as base_app
 import asserts.sourse.settings as settings
+from asserts.graphics.graphics_manager import AnimatedSprite, MultipleStateAnimatedSprite
 
 
-# noinspection PyUnusedLocal
-# noinspection PyUnreachableCode
+# noinspection PyUnusedLocal,PyUnreachableCode
 def print_debug(*args):
     if __debug__:
         print(*args)
+
+
+scale = Vector2(300, 300)
 
 
 class Player(Sprite):
@@ -68,7 +70,7 @@ class Player(Sprite):
 
     def apply_friction(self):
         if self.touch_wall:
-            self.__pos = self.__pos * self.ground_friction
+            self.__pos = self.pos * self.ground_friction
         else:
             self.vel = self.vel * self.global_friction
 
@@ -111,6 +113,7 @@ class Player(Sprite):
         return KilledPlayer(self)
 
     def loop(self):
+        print_debug(self.pos)
         self.time += 1
         self.save_to_cache()
         self.update()
@@ -122,7 +125,6 @@ class Player(Sprite):
         self.check_jump()
 
     def jump(self):
-        print_debug("jump")
         self.vel.update(y=10)
         self.__jumping = True
         while self.__jumping:
@@ -136,13 +138,14 @@ class Player(Sprite):
             self.jump()
 
     def right(self):
-        pass
+        self.pos.update(x=self.pos.x+10)
 
     def left(self):
         pass
 
     def draw(self):
-        pass
+        self.screen.blit(self.image, (self.pos[1], self.pos[0]))
+        # self.screen.blit(self.image, (self.pos[1]+scale.x, self.pos[0]+scale.y))
 
 
 class KilledPlayer:
@@ -176,6 +179,9 @@ class KilledPlayer:
 
     def respawn(self):
         self.__pos = self.__spawn
+
+    def draw(self):
+        pass
 
 
 class GlobalizedSprites(p.sprite.Group):
@@ -219,7 +225,7 @@ class Level:
         le = maps.load_level(level)
         self.spawn = le[0]
         self.win_cords = le[1]
-        self.map: List[List[Union[int, float, AnimatedSprite]]] = le[2]
+        self.map: List[List[Union[int, float]]] = le[2]
         self.map_sprites_group = GlobalizedSprites()
         self.win_sprite = graphics.get_sprite("win", settings.MAX_ANIMATION_TICKS, self.win_cords.x * 32,
                                               self.win_cords.y * 32)
@@ -234,6 +240,7 @@ class Level:
         self.memories = []
         self.level = level
 
+    # noinspection PyUnusedLocal,GrazieInspection
     def add_tile(self, tile: AnimatedSprite, tile_name, pos: Vector2):
         self.map_sprites_group.add(tile)
         if tile_name in graphics.SPIKES:
@@ -281,10 +288,9 @@ class Level:
     def draw(self):
         for dead_player in self.memories:
             dead_player.draw()
-        for y in range(len(self.map)):
-            for x in range(len(self.map[y])):
-                block = self.map[x][y]
-                self.screen.blit(block.image, block.rect)
+        sprite: Union[graphics.AnimatedSprite, graphics.MultipleStateAnimatedSprite]
+        for sprite in self.map_sprites_group.sprites():
+            self.screen.blit(sprite.image, (sprite.y+scale.x, sprite.x+scale.y))
 
     def next_level(self):
         self.app.level = Level(self.level + 1, self.app)

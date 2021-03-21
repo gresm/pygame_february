@@ -150,14 +150,15 @@ def load_image(name: str):
     return p.image.load(os.path.abspath("") + "/asserts/graphics/" + name)
 
 
-def get_sprite(name: str, ticks: int, x: float = 0, y: float = 0, hit_box: Optional[Tuple[int, int, int, int]] = None,
+def get_sprite(name: str, ticks: int, x: float = 0, y: float = 0,
+               hit_box: Union[Tuple[int, int, int, int], p.Rect, None] = None,
                steps: int = 0) -> AnimatedSprite:
     f = name + ".png"
     s = name + "_2.png"
     fd = name + "_3.png"
     ft = name + "_4.png"
     return AnimatedSprite([load_image(f), load_image(s), load_image(fd), load_image(ft)], ticks, x,
-                          y, hit_box, steps)
+                          y, p.Rect(hit_box) if hit_box else None, steps)
 
 
 def get_chained_sprite(name: str, ticks: int, animation_loops, x: float = 0, y: float = 0,

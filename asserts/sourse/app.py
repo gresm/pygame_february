@@ -58,7 +58,7 @@ class Player(Sprite):
 
     @property
     def image(self):
-        return self.sprite
+        return self.sprite.image
 
     @property
     def rect(self):
@@ -249,9 +249,6 @@ class Level:
             self.walls.add(tile)
         if tile_name == graphics.WIN:
             self.win_group.add(tile)
-        # FIXME param ticks and steps, I didn't know what to give
-        self.map[pos.x][pos.y] = graphics.get_sprite(tile_name, 0, x=pos.x, y=pos.y,
-                                                     hit_box=graphics.SPRITE_HIT_BOXES.get(tile_name))
 
     def add_dead_player(self, cache):
         self.memories.append(cache)
@@ -280,7 +277,7 @@ class Level:
             if Vector2(e.x, e.y) == self.win_cords:
                 ret.append(e.hit_box)
         return ret
-    
+
     @property
     def screen(self):
         return self.app.screen

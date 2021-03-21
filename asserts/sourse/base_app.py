@@ -21,6 +21,10 @@ class BaseApp:
         pygame.display.set_caption(title)
         self.draw_background()
 
+    @property
+    def display(self):
+        return pygame.display.get_surface()
+
     def run(self):
         """
         Function to run game\n
@@ -84,14 +88,14 @@ class BaseApp:
     def draw_background(self):
         self.screen.fill(self.bg_color)
 
-        pygame.display.flip()
-        return
-
     def on_exit(self):
         self.running = False
 
     def draw(self):
-        # To override
+        """
+        To override
+        :return:
+        """
         pass
 
     def check_events(self):

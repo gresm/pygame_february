@@ -125,28 +125,29 @@ class Player(Sprite):
         self.check_jump()
 
     def jump(self):
-        print_debug("jump")
-        self.vel.update(y=10)
-        # self.__jumping = True
-        # while self.__jumping:
-        #     self.pos.update(y=self.pos.y + self.vel.y)
-        #     self.vel.update(y=self.vel.y + self.gravity)
-        #     self.__jumping = self.on_ground
-        #     yield
+        self.vel.update(self.vel.x, 10)
+        self.__jumping = True
+        while self.__jumping:
+            self.pos.update(self.vel.x, self.pos.y + self.vel.y)
+            self.vel.update(self.vel.x, self.vel.y + self.gravity)
+            self.__jumping = self.on_ground
+            yield
 
     def check_jump(self):
         if self.jumping:
             self.jump()
 
     def right(self):
-        self.pos.update(self.pos.x, self.pos.y + 10)
+        self.pos.update(self.pos.x + 10, self.pos.y)
 
     def left(self):
-        self.pos.update(self.pos.x, self.pos.y - 10)
+        self.pos.update(self.pos.x - 10, self.pos.y)
 
     def draw(self):
-        self.screen.blit(self.image, (self.pos[1], self.pos[0]))
-        # self.screen.blit(self.image, (self.pos[1]+scale.x, self.pos[0]+scale.y))
+        self.screen.blit(self.image, (self.pos[1]*32+scale.y, self.pos[0]*32+scale.x))
+        # __import__("time").sleep(1)
+        # pass
+        # self.screen.blit(self.image, (self.pos[0] + scale.y, self.pos[1] + scale.x))
 
 
 class KilledPlayer:

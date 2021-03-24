@@ -1,2 +1,2 @@
-venv\Scripts\activate
+@venv\Scripts\activate
 @python load_again.py

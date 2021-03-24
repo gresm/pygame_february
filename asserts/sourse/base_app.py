@@ -17,6 +17,8 @@ class BaseApp:
         self.max_tps = 20
         self.running = True
         self.bg_color = bg_color
+        self.event_info: Optional[pygame.event.Event] = None
+        self.event_info_actual = False
         if icon_path:
             pygame.display.set_icon(load_image(icon_path))
         if title:
@@ -107,6 +109,8 @@ class BaseApp:
                 self.on_mouse_pressed(pygame.mouse.get_pos(), i + 1)
 
     def handle_event(self, event: pygame.event.Event):
+        self.event_info = event
+        self.event_info_actual = True
         e = event.type
         if e == pygame.QUIT:
             self.on_exit()
@@ -122,6 +126,7 @@ class BaseApp:
             self.on_mouse_move(pygame.mouse.get_pos())
         else:
             self.on_event(event)
+        self.event_info_actual = False
 
     def game_loop(self, delta: int):
         """

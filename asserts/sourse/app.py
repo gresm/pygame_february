@@ -125,13 +125,14 @@ class Player(Sprite):
         self.check_jump()
 
     def jump(self):
+        print_debug("jump")
         self.vel.update(y=10)
-        self.__jumping = True
-        while self.__jumping:
-            self.pos.update(y=self.pos.y + self.vel.y)
-            self.vel.update(y=self.vel.y + self.gravity)
-            self.__jumping = self.on_ground
-            yield
+        # self.__jumping = True
+        # while self.__jumping:
+        #     self.pos.update(y=self.pos.y + self.vel.y)
+        #     self.vel.update(y=self.vel.y + self.gravity)
+        #     self.__jumping = self.on_ground
+        #     yield
 
     def check_jump(self):
         if self.jumping:
@@ -340,7 +341,7 @@ class App(base_app.BaseApp):
     def on_key_up(self, key_code: int):
         pass
 
-    def game_loop(self):
+    def game_loop(self, delta):
         try:
             self.player.loop()
             self.level.loop()

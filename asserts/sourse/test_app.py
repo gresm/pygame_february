@@ -1,7 +1,6 @@
 from unittest import TestCase
 from app import *
 from copy import deepcopy
-import settings
 from test_base_app import TestBaseApp
 
 
@@ -97,6 +96,17 @@ class TestLevel(TestCase):
 
 
 class TestApp(TestBaseApp):
+
+    def __init__(self, title="load again", icon_path: AnyStr = "../graphics/icon.png", height: int = 300,
+                 width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True,
+                 methodName: str = 'runTest'):
+        super(TestApp, self).__init__(methodName=methodName)
+        self.app = App(title, icon_path, height, width, bg_color, create_new_screen)
+        self.Level = TestLevel(self.app.level, self.app)
+        self.Player = TestPlayer(self.app.level.spawn.x, self.app.level.spawn.y,
+                                 graphics.get_player_sprite(settings.PLAYER_ANIMATION_TICKS, *self.app.spawn), self.app,
+                                 p.Rect(*self.app.spawn, *settings.PLAYER_SIZE))
+
     def test_on_key_pressed(self):
         pass
 

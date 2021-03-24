@@ -90,7 +90,7 @@ class Player(Sprite):
         return center, left, right, top, down
 
     def respawn(self):
-        self.__pos = self.spawn
+        self.__pos = Vector2(self.spawn)
 
     def update(self):
         center, left, right, top, down = self.get_debug()
@@ -138,10 +138,10 @@ class Player(Sprite):
             self.jump()
 
     def right(self):
-        self.pos.update(x=self.pos.x+10)
+        self.pos.update(self.pos.x, self.pos.y + 10)
 
     def left(self):
-        pass
+        self.pos.update(self.pos.x, self.pos.y - 10)
 
     def draw(self):
         self.screen.blit(self.image, (self.pos[1], self.pos[0]))

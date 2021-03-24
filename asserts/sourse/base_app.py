@@ -1,4 +1,4 @@
-from typing import Tuple, AnyStr as Path
+from typing import Tuple, AnyStr as Path, Literal, Optional
 
 import pygame
 
@@ -6,7 +6,7 @@ from asserts.graphics.graphics_manager import load_image
 
 
 class BaseApp:
-    def __init__(self, title="load again", icon_path: Path = "../graphics/icon.png", height: int = 300,
+    def __init__(self, title: Optional[str] = None, icon_path: Optional[Path] = None, height: int = 300,
                  width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
         self.screen: pygame.Surface = pygame.display.set_mode((height, width)) \
             if create_new_screen else pygame.display.get_surface()
@@ -17,8 +17,10 @@ class BaseApp:
         self.max_tps = 20
         self.running = True
         self.bg_color = bg_color
-        pygame.display.set_icon(load_image(icon_path))
-        pygame.display.set_caption(title)
+        if icon_path:
+            pygame.display.set_icon(load_image(icon_path))
+        if title:
+            pygame.display.set_caption(title)
         self.draw_background()
 
     @property
@@ -40,7 +42,7 @@ class BaseApp:
                 while self.delta > 1 / self.max_tps:
                     self.delta -= 1 / self.max_tps
                     # running loop
-                    self.loop()
+                    self.loop(self.delta)
         except KeyboardInterrupt as e:
             self.on_exit()
             raise KeyboardInterrupt from e
@@ -48,15 +50,12 @@ class BaseApp:
         self.on_exit()
         return
 
-    def loop(self):
+    def loop(self, delta: int):
         # checking events
         self.check_events()
 
         # game loop
-        self.game_loop()
-
-        # checking input
-        self.handle_input()
+        self.game_loop(delta)
 
         # drawing
         self.draw_background()
@@ -71,16 +70,6 @@ class BaseApp:
                 self.on_key_pressed(i)
         return
 
-    def game_loop(self):
-        """
-        To override
-        :return:
-        """
-        pass
-
-    def on_key_pressed(self, key_code: int):
-        pass
-
     # noinspection PyMethodMayBeStatic
     def key_pressed(self, key_code: int) -> bool:
         return pygame.key.get_pressed()[key_code]
@@ -93,16 +82,29 @@ class BaseApp:
 
     def draw(self):
         """
-        To override
+        To override.
         :return:
         """
         pass
 
     def check_events(self):
+        # handle pressed input
+        self.handle_input()
+
+        # handle mouse input
+        self.handle_mouse_input()
+
+        # checking events
         for event in pygame.event.get():
-            # checking events
             self.handle_event(event)
         return
+
+    def handle_mouse_input(self):
+        keys = pygame.mouse.get_pressed(3)
+        for i in range(len(keys)):
+            if keys[i]:
+                # noinspection PyTypeChecker
+                self.on_mouse_pressed(pygame.mouse.get_pos(), i + 1)
 
     def handle_event(self, event: pygame.event.Event):
         e = event.type
@@ -112,14 +114,70 @@ class BaseApp:
             self.on_key_down(event.key)
         elif e == pygame.KEYUP:
             self.on_key_up(event.key)
+        elif e == pygame.MOUSEBUTTONDOWN:
+            self.on_mouse_button_down(pygame.mouse.get_pos(), event.button)
+        elif e == pygame.MOUSEBUTTONUP:
+            self.on_mouse_button_up(pygame.mouse.get_pos(), event.button)
+        elif e == pygame.MOUSEMOTION:
+            self.on_mouse_move(pygame.mouse.get_pos())
         else:
             self.on_event(event)
+
+    def game_loop(self, delta: int):
+        """
+        To override.
+        :return:
+        """
+        pass
+
+    def on_key_pressed(self, key_code: int):
+        """
+        To override.
+        :param key_code:
+        :return:
+        """
+        pass
 
     def on_event(self, event: pygame.event.Event):
         """
         To override.
         :param event: event
         :return: None
+        """
+        pass
+
+    def on_mouse_button_down(self, pos: Tuple[int, int], button_id: Literal[1, 2, 3, 4, 5]):
+        """
+        To override.
+        :param button_id:
+        :param pos:
+        :return:
+        """
+        pass
+
+    def on_mouse_button_up(self, pos: Tuple[int, int], button_id: Literal[1, 2, 3, 4, 5]):
+        """
+        To override.
+        :param button_id:
+        :param pos:
+        :return:
+        """
+        pass
+
+    def on_mouse_pressed(self, pos: Tuple[int, int], button_id: Literal[1, 2, 3, 4, 5]):
+        """
+        To override.
+        :param button_id:
+        :param pos:
+        :return:
+        """
+        pass
+
+    def on_mouse_move(self, pos: Tuple[int, int]):
+        """
+        To override.
+        :param pos:
+        :return:
         """
         pass
 

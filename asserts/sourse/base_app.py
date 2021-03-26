@@ -2,7 +2,14 @@ from typing import Tuple, AnyStr as Path, Literal, Optional
 
 import pygame
 
-from asserts.graphics.graphics_manager import load_image
+try:
+    from asserts.graphics.graphics_manager import load_image
+except ImportError:
+    def load_image(name: str):
+        return pygame.image.load(name)
+
+all_keycodes = tuple(getattr(pygame.constants, key_str) for key_str in
+                     filter(lambda k: k.startswith("K_"), dir(pygame.constants)))
 
 
 class BaseApp:
@@ -67,9 +74,9 @@ class BaseApp:
 
     def handle_input(self):
         keys_pressed = pygame.key.get_pressed()
-        for i in range(len(keys_pressed)):
-            if keys_pressed[i]:
-                self.on_key_pressed(i)
+        for keycode in all_keycodes:
+            if keys_pressed[keycode]:
+                self.on_key_pressed(keycode)
         return
 
     # noinspection PyMethodMayBeStatic

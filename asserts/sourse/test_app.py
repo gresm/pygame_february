@@ -1,6 +1,7 @@
-from unittest import TestCase
-from app import *
 from copy import deepcopy
+from unittest import TestCase
+
+from app import *
 from test_base_app import TestBaseApp
 
 

@@ -1,4 +1,4 @@
-from typing import Union, Sequence, List, AnyStr, Tuple, Optional
+from typing import Union, Sequence, List, Tuple, Optional, AnyStr as StrPath
 
 import pygame as p
 from pygame.math import Vector2
@@ -17,7 +17,7 @@ def print_debug(*args):
         print(*args)
 
 
-scale = Vector2(300, 300)
+move = Vector2(300, 300)
 
 
 class Player(Sprite):
@@ -69,10 +69,11 @@ class Player(Sprite):
         return self.__jumping
 
     def apply_friction(self):
-        if self.touch_wall:
-            self.__pos = self.pos * self.ground_friction
-        else:
-            self.vel = self.vel * self.global_friction
+        pass
+        # if self.touch_wall:
+        #     self.__pos = self.pos * self.ground_friction
+        # else:
+        #     self.vel = self.vel * self.global_friction
 
     def get_debug(self) -> Tuple[bool, bool, bool, bool, bool]:
         center = self.collide_with_walls()
@@ -90,7 +91,8 @@ class Player(Sprite):
         return center, left, right, top, down
 
     def respawn(self):
-        self.__pos = Vector2(self.spawn)
+        # self.__pos = Vector2(self.spawn)
+        pass
 
     def update(self):
         center, left, right, top, down = self.get_debug()
@@ -100,36 +102,42 @@ class Player(Sprite):
         self.sprite.goto(*self.pos)
 
     def collide_with_walls(self):
-        return bool(self.hit_box.collidelistall(self.level.walls_hit_box))
+        return bool(self.hit_box.collidelistall(self.level.walls_hit_box()))
 
     def save_to_cache(self):
         self.cache.append(self.pos)
 
     @property
     def is_dead(self) -> bool:
-        return bool(self.hit_box.collidelist(self.level.spikes_hit_box))
+        return bool(self.hit_box.collidelist(self.level.spikes_hit_box()))
 
     def dead(self):
         return KilledPlayer(self)
 
     def loop(self):
-        print_debug(self.pos)
+        def f(var: Union[str, int, float, Vector2], n, r=False, t=False):
+            if r:
+                if bool(var):
+                    return n
+                return ""
+            return n + ": " + str(var) + (" type: " + var.__class__.__name__ if t else "")
+        print_debug(f(self.pos, "pos", t=True), f(self.jumping, "jumping", r=True))
         self.time += 1
         self.save_to_cache()
         self.update()
         if self.is_dead:
             self.level.add_dead_player(self.dead())
             raise EndGame()
-        if self.hit_box.collidelistall(self.level.wins_hit_box):
+        if self.hit_box.collidelistall(self.level.wins_hit_box()):
             raise EndGame(True)
         self.check_jump()
 
     def jump(self):
-        self.vel.update(self.vel.x, 10)
+        self.vel.y = 10
         self.__jumping = True
         while self.__jumping:
-            self.pos.update(self.vel.x, self.pos.y + self.vel.y)
-            self.vel.update(self.vel.x, self.vel.y + self.gravity)
+            self.pos.y += self.vel.y
+            self.vel.y += self.gravity
             self.__jumping = self.on_ground
             yield
 
@@ -138,16 +146,15 @@ class Player(Sprite):
             self.jump()
 
     def right(self):
-        self.pos.update(self.pos.x + 10, self.pos.y)
+        self.pos.x += 1
 
     def left(self):
-        self.pos.update(self.pos.x - 10, self.pos.y)
+        self.pos.x -= 1
 
     def draw(self):
-        self.screen.blit(self.image, (self.pos[1]*32+scale.y, self.pos[0]*32+scale.x))
-        # __import__("time").sleep(1)
+        self.screen.blit(self.image, (self.pos[1] * 32 + move.y, self.pos[0] * 32 + move.x))
         # pass
-        # self.screen.blit(self.image, (self.pos[0] + scale.y, self.pos[1] + scale.x))
+        # self.screen.blit(self.image, (self.pos[0] + move.y, self.pos[1] + move.x))
 
 
 class KilledPlayer:
@@ -255,7 +262,6 @@ class Level:
     def add_dead_player(self, cache):
         self.memories.append(cache)
 
-    @property
     def walls_hit_box(self):
         ret = []
         e: Union[MultipleStateAnimatedSprite, AnimatedSprite]
@@ -263,7 +269,6 @@ class Level:
             ret.append(e.hit_box)
         return ret
 
-    @property
     def spikes_hit_box(self):
         ret = []
         e: Union[MultipleStateAnimatedSprite, AnimatedSprite]
@@ -271,7 +276,6 @@ class Level:
             ret.append(e.hit_box)
         return ret
 
-    @property
     def wins_hit_box(self):
         ret = []
         e: Union[MultipleStateAnimatedSprite, AnimatedSprite]
@@ -287,9 +291,9 @@ class Level:
     def draw(self):
         for dead_player in self.memories:
             dead_player.draw()
-        sprite: Union[graphics.AnimatedSprite, graphics.MultipleStateAnimatedSprite]
-        for sprite in self.map_sprites_group.sprites():
-            self.screen.blit(sprite.image, (sprite.y+scale.x, sprite.x+scale.y))
+        # sprite: Union[graphics.AnimatedSprite, graphics.MultipleStateAnimatedSprite]
+        # for sprite in self.map_sprites_group.sprites():
+        #     self.screen.blit(sprite.image, (sprite.y + move.x, sprite.x + move.y))
 
     def next_level(self):
         self.app.level = Level(self.level + 1, self.app)
@@ -304,7 +308,7 @@ class Level:
 
 
 class App(base_app.BaseApp):
-    def __init__(self, title="load again", icon_path: AnyStr = "../graphics/icon.png", height: int = 300,
+    def __init__(self, title="load again", icon_path: StrPath = "../graphics/icon.png", height: int = 300,
                  width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
         super().__init__(title, icon_path, height, width, bg_color, create_new_screen)
         self.level = Level(1, self)
@@ -316,17 +320,7 @@ class App(base_app.BaseApp):
     def spawn(self):
         return self.level.spawn.x, self.level.spawn.y
 
-    # TODO: in version 3.10 it is added match (like switch because in the python!) #CleanCode
     def on_key_pressed(self, key_code: int):
-        # match key_code:
-        #     case p.K_ESCAPE:
-        #         self.on_exit()
-        #     case (key_code == p.K_SPACE) or (key_code == p.K_W) or (key_code == p.K_UP):
-        #         self.player.jump()
-        #     case (key_code == p.K_A) or (key_code == p.K_LEFT):
-        #         self.player.left()
-        #     case (key_code == p.K_D) or (key_code == p.K_RIGHT):
-        #         self.player.right()
         if key_code == p.K_ESCAPE:
             self.on_exit()
         if (key_code == p.K_SPACE) or (key_code == p.K_w) or (key_code == p.K_UP):

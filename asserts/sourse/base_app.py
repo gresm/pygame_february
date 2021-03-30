@@ -1,4 +1,4 @@
-from typing import Tuple, AnyStr as Path, Literal, Optional
+from typing import Tuple, Literal, Optional, AnyStr as StrPath
 
 import pygame
 
@@ -13,7 +13,7 @@ all_keycodes = tuple(getattr(pygame.constants, key_str) for key_str in
 
 
 class BaseApp:
-    def __init__(self, title: Optional[str] = None, icon_path: Optional[Path] = None, height: int = 300,
+    def __init__(self, title: Optional[str] = None, icon_path: Optional[StrPath] = None, height: int = 300,
                  width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
         self.screen: pygame.Surface = pygame.display.set_mode((height, width)) \
             if create_new_screen else pygame.display.get_surface()

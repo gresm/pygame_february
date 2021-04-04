@@ -1,14 +1,15 @@
-from typing import Union, Sequence, List, Tuple, Optional, AnyStr as StrPath
+from typing import Union, Sequence, List, Tuple, Optional, AnyStr as StrPath, Callable
 
 import pygame as p
 from pygame.math import Vector2
 from pygame.sprite import Sprite
+from pygame.mouse import get_pos as cursor_pos
 
 import asserts.graphics.graphics_manager as graphics
 import asserts.maps.maps_manager as maps
 import asserts.sourse.base_app as base_app
 import asserts.sourse.settings as settings
-from asserts.graphics.graphics_manager import AnimatedSprite, MultipleStateAnimatedSprite
+from asserts.graphics.graphics_manager import AnimatedSprite, MultipleStateAnimatedSprite, pix2pos
 
 
 # noinspection PyUnusedLocal,PyUnreachableCode
@@ -115,13 +116,18 @@ class Player(Sprite):
         return KilledPlayer(self)
 
     def loop(self):
-        def f(var: Union[str, int, float, Vector2], n, r=False, t=False):
-            if r:
-                if bool(var):
-                    return n
-                return ""
-            return n + ": " + str(var) + (" type: " + var.__class__.__name__ if t else "")
-        print_debug(f(self.pos, "pos", t=True), f(self.jumping, "jumping", r=True))
+        # noinspection PyUnreachableCode
+        if __debug__:
+            def f(var: Union[str, int, float, Vector2, Callable], n, r=False, t=False):
+                if callable(var):
+                    var = var()
+                if r:
+                    if bool(var):
+                        return n
+                    return ""
+                return n + ": " + str(var) + (" type: " + var.__class__.__name__ if t else "")
+
+            print_debug(f(self.pos, "pos", t=True), f(self.jumping, "jumping", r=True), f(cursor_pos, "cursor pos"))
         self.time += 1
         self.save_to_cache()
         self.update()
@@ -133,23 +139,29 @@ class Player(Sprite):
         self.check_jump()
 
     def jump(self):
-        self.vel.y = 10
-        self.__jumping = True
-        while self.__jumping:
-            self.pos.y += self.vel.y
-            self.vel.y += self.gravity
-            self.__jumping = self.on_ground
-            yield
+        # self.vel.y = 10
+        # self.__jumping = True
+        # while self.__jumping:
+        #     self.pos.y += self.vel.y
+        #     self.vel.y += self.gravity
+        #     self.__jumping = self.on_ground
+        #     yield
+        self.pos.y += 1
+        yield
+        self.pos.y -= 1
 
     def check_jump(self):
-        if self.jumping:
-            self.jump()
+        # if self.jumping:
+        #     self.jump()
+        pass
 
     def right(self):
-        self.pos.x += 1
+        if self.pos.y + 1 in range(self.level.level_len):
+            self.pos.y += 1
 
     def left(self):
-        self.pos.x -= 1
+        if self.pos.y - 1 in range(self.level.level_len):
+            self.pos.y -= 1
 
     def draw(self):
         self.screen.blit(self.image, (self.pos[1] * 32 + move.y, self.pos[0] * 32 + move.x))
@@ -226,6 +238,7 @@ class EndGame(Exception):
 
 class Level:
     levels = range(3)
+    levels_len = {1: 15, 2: 10, 3: 10}
 
     def __init__(self, level: int, app: "App"):
         self.app = app
@@ -248,6 +261,7 @@ class Level:
                               graphics.SPRITES[self.map[x][y]], Vector2(x, y))
         self.memories = []
         self.level = level
+        self.level_len = self.levels_len[self.level]
 
     # noinspection PyUnusedLocal,GrazieInspection
     def add_tile(self, tile: AnimatedSprite, tile_name, pos: Vector2):
@@ -291,9 +305,9 @@ class Level:
     def draw(self):
         for dead_player in self.memories:
             dead_player.draw()
-        # sprite: Union[graphics.AnimatedSprite, graphics.MultipleStateAnimatedSprite]
-        # for sprite in self.map_sprites_group.sprites():
-        #     self.screen.blit(sprite.image, (sprite.y + move.x, sprite.x + move.y))
+        sprite: Union[graphics.AnimatedSprite, graphics.MultipleStateAnimatedSprite]
+        for sprite in self.map_sprites_group.sprites():
+            self.screen.blit(sprite.image, (sprite.y + move.x, sprite.x + move.y))
 
     def next_level(self):
         self.app.level = Level(self.level + 1, self.app)
@@ -323,15 +337,20 @@ class App(base_app.BaseApp):
     def on_key_pressed(self, key_code: int):
         if key_code == p.K_ESCAPE:
             self.on_exit()
+        # if (key_code == p.K_SPACE) or (key_code == p.K_w) or (key_code == p.K_UP):
+        #     self.player.jump()
+        # if (key_code == p.K_a) or (key_code == p.K_LEFT):
+        #     self.player.left()
+        # if (key_code == p.K_d) or (key_code == p.K_RIGHT):
+        #     self.player.right()
+
+    def on_key_down(self, key_code: int):
         if (key_code == p.K_SPACE) or (key_code == p.K_w) or (key_code == p.K_UP):
             self.player.jump()
         if (key_code == p.K_a) or (key_code == p.K_LEFT):
             self.player.left()
         if (key_code == p.K_d) or (key_code == p.K_RIGHT):
             self.player.right()
-
-    def on_key_down(self, key_code: int):
-        pass
 
     def on_key_up(self, key_code: int):
         pass

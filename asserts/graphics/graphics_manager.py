@@ -1,6 +1,7 @@
 import os
 from enum import Enum
 from typing import List, Tuple, Union, Optional, Dict
+from functools import lru_cache
 
 import pygame as p
 
@@ -313,3 +314,8 @@ class MultipleStateAnimatedSprite(p.sprite.Sprite):
 
     def move_offset(self, x: float, y: float):
         self.state.move_offset(x, y)
+
+
+@lru_cache
+def pix2pos(a):
+    return a / 32

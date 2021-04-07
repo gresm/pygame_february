@@ -1,11 +1,12 @@
 from enum import Enum
+from os.path import abspath
 from typing import Union
 
 import pygame as p
 
 
 class Sounds(Enum):
-    bgm = "bgm.wav"
+    bgm = abspath("") + "/asserts/sounds/" + "bgm.wav"
 
 
 class SoundPlayer:

@@ -2,8 +2,8 @@ from typing import Final
 
 MAX_ANIMATION_TICKS: Final = 10
 MAX_FPS: Final = 10
-WIDTH: Final = 500
-HEIGHT: Final = 900
+WIDTH: Final = 190
+HEIGHT: Final = 480
 BG_COLOR: Final = (255, 255, 255)
 GRAVITY: Final = 1
 PLAYER_SPEED: Final = 1

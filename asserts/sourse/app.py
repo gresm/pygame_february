@@ -4,12 +4,14 @@ import pygame as p
 from pygame.math import Vector2
 from pygame.sprite import Sprite
 from pygame.mouse import get_pos as cursor_pos
+from pygame.font import FontType, get_default_font
 
 import asserts.graphics.graphics_manager as graphics
 import asserts.maps.maps_manager as maps
 import asserts.sourse.base_app as base_app
 import asserts.sourse.settings as settings
-from asserts.graphics.graphics_manager import AnimatedSprite, MultipleStateAnimatedSprite, pix2pos
+from asserts.sounds.sounds_manager import Sounds, SoundPlayer
+from asserts.graphics.graphics_manager import AnimatedSprite, MultipleStateAnimatedSprite
 
 
 # noinspection PyUnusedLocal,PyUnreachableCode
@@ -18,7 +20,7 @@ def print_debug(*args):
         print(*args)
 
 
-move = Vector2(300, 300)
+move = Vector2()
 
 
 class Player(Sprite):
@@ -40,6 +42,7 @@ class Player(Sprite):
         self.global_friction = settings.PLAYER_NORMAL_FRICTION
         self.ground_friction = settings.PLAYER_ON_GROUND_FRICTION
         self.__jumping = False
+        self.jumper = None
 
     @property
     def level(self):
@@ -51,7 +54,7 @@ class Player(Sprite):
 
     @property
     def spawn(self):
-        return self.app.spawn
+        return self.level.spawn
 
     @property
     def pos(self):
@@ -92,8 +95,8 @@ class Player(Sprite):
         return center, left, right, top, down
 
     def respawn(self):
-        # self.__pos = Vector2(self.spawn)
-        pass
+        self.__pos = Vector2(self.spawn)
+        # pass
 
     def update(self):
         center, left, right, top, down = self.get_debug()
@@ -112,13 +115,26 @@ class Player(Sprite):
     def is_dead(self) -> bool:
         return bool(self.hit_box.collidelist(self.level.spikes_hit_box()))
 
-    def dead(self):
+    def kill(self):
         return KilledPlayer(self)
 
     def loop(self):
         # noinspection PyUnreachableCode
         if __debug__:
             def f(var: Union[str, int, float, Vector2, Callable], n, r=False, t=False):
+                """
+
+                :param var: variable
+                :type var: str | int | float | Vector2 | Callable
+                :param n: name
+                :type n: str
+                :param r: switcher
+                :type r: bool
+                :param t: type
+                :type t: bool
+                :return: message
+                :rtype: str
+                """
                 if callable(var):
                     var = var()
                 if r:
@@ -127,18 +143,16 @@ class Player(Sprite):
                     return ""
                 return n + ": " + str(var) + (" type: " + var.__class__.__name__ if t else "")
 
-            print_debug(f(self.pos, "pos", t=True), f(self.jumping, "jumping", r=True), f(cursor_pos, "cursor pos"))
-        self.time += 1
-        self.save_to_cache()
+            print_debug(f(self.pos, "pos", t=True), f(self.jumping, "jumping", r=True), f(cursor_pos, "cursor pos"),
+                        f(self.time, "time"))
         self.update()
         if self.is_dead:
-            self.level.add_dead_player(self.dead())
-            raise EndGame()
+            self.level.add_dead_player(self.kill())
         if self.hit_box.collidelistall(self.level.wins_hit_box()):
-            raise EndGame(True)
-        self.check_jump()
+            self.level.next_level()
 
-    def jump(self):
+    # noinspection PyMethodMayBeStatic
+    def _jump_gen(self):
         # self.vel.y = 10
         # self.__jumping = True
         # while self.__jumping:
@@ -146,22 +160,38 @@ class Player(Sprite):
         #     self.vel.y += self.gravity
         #     self.__jumping = self.on_ground
         #     yield
-        self.pos.y += 1
+        self.pos.x -= 1
         yield
-        self.pos.y -= 1
+        self.pos.x += 1
 
-    def check_jump(self):
-        # if self.jumping:
-        #     self.jump()
-        pass
+    def save(self):
+        self.time += 1
+        self.save_to_cache()
+
+    def jump(self):
+        self.save()
+        if self.jumper is None:
+            self.jumper = self._jump_gen()
+        try:
+            next(self.jumper)
+        except StopIteration:
+            self.jumper = None
 
     def right(self):
+        _, _, right, _, _ = self.get_debug()
         if self.pos.y + 1 in range(self.level.level_len):
+            self.save()
             self.pos.y += 1
+            if self.jumper is not None:
+                self.jump()
 
     def left(self):
+        _, left, _, _, _ = self.get_debug()
         if self.pos.y - 1 in range(self.level.level_len):
+            self.save()
             self.pos.y -= 1
+            if self.jumper is not None:
+                self.jump()
 
     def draw(self):
         self.screen.blit(self.image, (self.pos[1] * 32 + move.y, self.pos[0] * 32 + move.x))
@@ -205,6 +235,42 @@ class KilledPlayer:
         pass
 
 
+class Button:
+
+    def __init__(self, screen: p.Surface, rect: p.Rect = (0, 0, 0, 0),
+                 text: str = None, text_font: FontType = None, text_color: p.Color = None,
+                 text_bg_color: p.Color = None, img: Union[str, p.Surface, Sprite] = None, render=False):
+        self.rect = rect
+        self.screen = screen
+        if text is not None:
+            if text_font is None:
+                text_font = get_default_font
+            if text_color is None:
+                text_color = p.color.Color(255, 255, 255)
+            text = text_font.render(text, 1, text_color)
+            size = text.get_size()
+            self.display = p.Surface(size)
+            self.display.fill(text_bg_color)
+            self.display.blit(text, (0, 0))
+        elif img is not None:
+            if isinstance(img, str):
+                self.display = p.image.load(img)
+            elif isinstance(img, Sprite):
+                self.display = img.image
+            elif isinstance(img, p.Surface):
+                self.display = img
+            else:
+                raise ValueError
+
+        else:
+            raise ValueError
+        if render:
+            self.render()
+
+    def render(self):
+        self.screen.blit(self.display, self.rect.size)
+
+
 class GlobalizedSprites(p.sprite.Group):
     def __init__(self, *sprites: Union[Sprite, Sequence[Sprite]]):
         super().__init__(*sprites)
@@ -228,12 +294,13 @@ class GlobalizedSprites(p.sprite.Group):
 class EndGame(Exception):
     def __init__(self, win=False):
         self.win = win
-        msgs = ["Game Over"]
-        if win:
-            msgs.append("You win!")
-        else:
-            msgs.append("You lose")
-        super(EndGame, self).__init__("\n".join(msgs))
+        # msgs = ["Game Over"]d
+        # if win:
+        #     msgs.append("You win!")
+        # else:
+        #     msgs.append("You lose")
+        # super(EndGame, self).__init__("\n".join(msgs))
+        super(EndGame, self).__init__("You win")
 
 
 class Level:
@@ -309,8 +376,13 @@ class Level:
         for sprite in self.map_sprites_group.sprites():
             self.screen.blit(sprite.image, (sprite.y + move.x, sprite.x + move.y))
 
+    @property
+    def player(self):
+        return self.app.player
+
     def next_level(self):
         self.app.level = Level(self.level + 1, self.app)
+        self.player.respawn()
 
     def respawn(self):
         for dead_player in self.memories:
@@ -322,17 +394,17 @@ class Level:
 
 
 class App(base_app.BaseApp):
-    def __init__(self, title="load again", icon_path: StrPath = "../graphics/icon.png", height: int = 300,
-                 width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0), create_new_screen: bool = True):
+    def __init__(self, title="load again", icon_path: StrPath = "../graphics/icon.png", play_sound: bool = True,
+                 height: int = 300, width: int = 300, bg_color: Tuple[int, int, int] = (0, 0, 0),
+                 create_new_screen: bool = True):
         super().__init__(title, icon_path, height, width, bg_color, create_new_screen)
         self.level = Level(1, self)
         self.player = Player(self.level.spawn.x, self.level.spawn.y,
-                             graphics.get_player_sprite(settings.PLAYER_ANIMATION_TICKS, *self.spawn), self,
-                             p.Rect(*self.spawn, *settings.PLAYER_SIZE))
-
-    @property
-    def spawn(self):
-        return self.level.spawn.x, self.level.spawn.y
+                             graphics.get_player_sprite(settings.PLAYER_ANIMATION_TICKS, *self.level.spawn), self,
+                             p.Rect(*self.level.spawn, *settings.PLAYER_SIZE))
+        if play_sound:
+            self.sound_player = SoundPlayer(Sounds.bgm, -1)
+            self.sound_player.play()
 
     def on_key_pressed(self, key_code: int):
         if key_code == p.K_ESCAPE:
@@ -351,6 +423,8 @@ class App(base_app.BaseApp):
             self.player.left()
         if (key_code == p.K_d) or (key_code == p.K_RIGHT):
             self.player.right()
+        if key_code == p.K_x:
+            self.player.kill()
 
     def on_key_up(self, key_code: int):
         pass

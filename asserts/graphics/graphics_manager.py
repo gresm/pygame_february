@@ -318,4 +318,4 @@ class MultipleStateAnimatedSprite(p.sprite.Sprite):
 
 @lru_cache
 def pix2pos(a):
-    return a / 32
+    return a*10 / 32

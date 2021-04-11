@@ -1,7 +1,7 @@
 import os
 from enum import Enum
-from typing import List, Tuple, Union, Optional, Dict
 from functools import lru_cache
+from typing import List, Tuple, Union, Optional, Dict
 
 import pygame as p
 
@@ -318,4 +318,4 @@ class MultipleStateAnimatedSprite(p.sprite.Sprite):
 
 @lru_cache
 def pix2pos(a):
-    return a*10 / 32
+    return a * 10 / 32
